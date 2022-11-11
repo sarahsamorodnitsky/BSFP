@@ -6,6 +6,7 @@ library(foreach)
 library(Matrix)
 library(MASS)
 library(truncnorm)
+library(infinitefactor)
 
 #' Bayesian Simultaneous Factorization and Prediction (BSFP)
 #'
