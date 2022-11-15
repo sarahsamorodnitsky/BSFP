@@ -11,6 +11,10 @@ library(devtools)
 devtools::install_github("sarahsamorodnitsky/BSFP")
 ```
 
+This package depends on the following R packages: `MASS`, `Matrix, `truncnorm`, and `infinitefactor`. 
+
+# Examples
+
 Here we will illustrate how to apply the BSFP model to simulated data. The data will be simulated from the assumed model. We will walk through apply BSFP, checking for convergence, aligning the results, and summarizing the results. We will illustrate using BSFP on data with and without missing values. 
 
 Below, we establish some basics of the data we will generate. We will generate $q=2$ sources of data measured on $n=50$ samples. Source 1 will contain $75$ features and source 2 will contain $100$ features. 
