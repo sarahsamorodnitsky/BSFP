@@ -1,8 +1,6 @@
 # Bayesian Simultaneous Factorization and Prediction Functions
 
 # Packages
-library(doParallel)
-library(foreach)
 library(Matrix)
 library(MASS)
 library(truncnorm)
