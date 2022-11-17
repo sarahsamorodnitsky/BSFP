@@ -1700,7 +1700,40 @@ bsfp.predict <- function(bsfp.fit, test_data, Y_test, model_params = NULL, spars
 #' expression levels of each factor across samples (scores). This function is
 #' intended to be used after alignment using \code{match_align_bsfp()}
 #'
+#' @return Returns a list of posterior summaries for the joint and individual loadings and scores,
+#' regression coefficients, estimated error variance in a continuous response, missing data
+#' imputation for missing values in the sources and in the outcome.
 #'
+#' This list contains the following elements:
+#' \item{joint.scores.summary}{List of matrices for each joint factor. Each matrix has \eqn{n} rows
+#' for each sample. The first column is the posterior mean score after burn-in for a given sample.
+#' Then gives the lower and upper bounds for the 95\% credible interval. If no joint structure
+#' was estimated, then returns \code{NULL}.}
+#' \item{joint.loadings.summary}{List of lists for each joint factor. Each list contains \eqn{q} lists
+#' for the contributions of each biomarker from each source to the given factor. Provides the
+#' posterior mean and 95\% credible interval. If no joint structure was estimated, then returns \code{NULL}.}
+#' \item{individual.scores.summary}{List of length \eqn{q} with inners lists for each individual factor. Summarizes
+#' the score for each sample for each factor. Provides posterior mean and 95\% credible interval. If no individual
+#' structure from a source was estimated, returns \code{NULL}. }
+#' \item{individual.loadings.summary}{List of length \eqn{q} with inners lists for each individual factor.
+#' Summarizes the loadings for each biomarker from each source to the given factor. Provides posterior mean and 95\% credible interval. If no individual
+#' structure from a source was estimated, returns \code{NULL}.}
+#' \item{joint.betas.summary}{Summarizes the regression coefficients for the joint factors. Provides
+#' the posterior mean and 95\% credible interval. If no joint structure was estimated, returns \code{NULL}.}
+#' \item{individual.betas.summary}{List of length \eqn{q} with summaries for the regression coefficients
+#' of each individual factor from each source. Provides
+#' the posterior mean and 95\% credible interval. If no individual structure was estimated for a source,
+#' returns \code{NULL}.}
+#' \item{Xm.summary}{Returns a list of length \eqn{q} with posterior summaries (mean and 95\% credible interval)
+#' for each missing sample from each source. Rownames correspond to the source and the sample index. The index
+#' counts from the upper leftmost entry of the matrix, i.e. the index corresponds to \code{which(is.na(data[[s,1]]))}
+#' for \eqn{s=1,\dots,q}.}
+#' \item{Ym.summary}{Summarizes the imputed values for unobserved outcomes. Provides the posterior mean
+#' and 95\% credible interval. Indexes from \eqn{1,\dots, n}. If no unobserved outcomes, returns \code{NULL}.}
+#' \item{ranks}{Vector of length \eqn{q+1} of estimated joint and individual ranks. ranks[1] contains the joint rank.
+#' ranks[2:(q+1)] contains individual ranks.}
+#' \item{tau2.summary}{Posterior mean (mean and 95\% credible interval) of estimated error variance in
+#' continuous outcome, if given. If no continuous outcome was used, returns \code{NULL}.}
 #' @export
 #'
 #' @examples
@@ -2311,6 +2344,10 @@ log_joint_density <- function(data, Y = NULL, U.iter, V.iter, W.iter, Vs.iter, m
 #' if generating response with sparsity. NULL if sparsity=FALSE. Should have an
 #' integer for joint and each individual structure. May be set to NULL and
 #' the number of factors in the spike will be determined randomly.
+#'
+#' @details Generate data according to the BSF and BSFP models. Use for examples or
+#' simulations to assess model performance.
+#'
 #' @export
 
 bsfp_data <- function(p.vec, n, ranks, true_params, s2nX = NULL, s2nY = NULL, response = NULL, missingness = NULL, missing_data_type = NULL, prop_missing = NULL, sparsity, identically_zero = FALSE, num_in_spike = NULL) {
