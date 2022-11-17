@@ -20,7 +20,8 @@ bsfp(
 \arguments{
 \item{data}{A matrix of lists or a list of matrices that share the same number of
 columns. The matrices must be oriented in \eqn{p \times n} orientation. May contain NAs if
-there are missing values in the dataset.}
+there are missing values in the dataset. Datasets not required to have the same number
+of features.}
 
 \item{Y}{A matrix of lists or a \eqn{n\times 1} matrix of continuous or binary outcome.
 May be \code{NULL} if no outcome is given. May contain NAs if there are missing outcomes.}
@@ -77,10 +78,10 @@ Returns a list with the following elements:
 \item{beta.draw}{List of posterior samples for the regression coefficients used in the predictive model}
 }
 \description{
-Given q sources of data and a continuous or binary outcome measured on n samples,
-BSFP can decompose variation across the sources into joint and individual structures
-and use the estimated factors to predict the outcome. BSFP estimates the full posterior
-distributions of the factors and the predictive model.
+Given multiple sources of data and a continuous or binary outcome measured on n samples,
+BSFP can decompose variation across the sources into joint and individual structures.
+BSFP simultaneously uses the estimated factors driving these structures to predict an outcome.
+BSFP estimates the full posterior distributions of the factors and the predictive model.
 Use this function to simulate samples from posterior distributions
 of joint and individual structures. This function
 can be used in several ways:
@@ -105,16 +106,16 @@ p.vec <- c(75, 100)
 q <- 2
 
 # Setting up the model parameters
-true_params <- list(error_vars = c(1,1),
+true_params <- list(error_vars = c(1,1), # Length must be q
 joint_var = 1,
-indiv_vars = c(1,1),
-beta_vars = c(1, 1, rep(1, q)),
+indiv_vars = c(1,1), # Length must be q
+beta_vars = c(1, 1, rep(1, q)), # Length must be q+2 (intercept, joint, individual)
 response_vars = c(shape = 1, rate = 1))
 
 # Choose ranks
- r <- 3
- r.vec <- c(3, 3)
- ranks <- c(r, r.vec)
+r <- 3
+r.vec <- c(3, 3)
+ranks <- c(r, r.vec)
 
 # Number of posterior sampling iterations
 nsample <- 1000

@@ -2,10 +2,10 @@
 
 #' Bayesian Simultaneous Factorization and Prediction (BSFP)
 #'
-#' Given q sources of data and a continuous or binary outcome measured on n samples,
-#' BSFP can decompose variation across the sources into joint and individual structures
-#' and use the estimated factors to predict the outcome. BSFP estimates the full posterior
-#' distributions of the factors and the predictive model.
+#' Given multiple sources of data and a continuous or binary outcome measured on n samples,
+#' BSFP can decompose variation across the sources into joint and individual structures.
+#' BSFP simultaneously uses the estimated factors driving these structures to predict an outcome.
+#' BSFP estimates the full posterior distributions of the factors and the predictive model.
 #' Use this function to simulate samples from posterior distributions
 #' of joint and individual structures. This function
 #' can be used in several ways:
@@ -18,7 +18,8 @@
 #' hyperparameters for the prior distributions on the structures.
 #' @param data A matrix of lists or a list of matrices that share the same number of
 #' columns. The matrices must be oriented in \eqn{p \times n} orientation. May contain NAs if
-#' there are missing values in the dataset.
+#' there are missing values in the dataset. Datasets not required to have the same number
+#' of features.
 #' @param Y A matrix of lists or a \eqn{n\times 1} matrix of continuous or binary outcome.
 #' May be \code{NULL} if no outcome is given. May contain NAs if there are missing outcomes.
 #' @param nninit Boolean determining if nuclear-norm penalized objective is used
@@ -78,10 +79,10 @@
 #' q <- 2
 #'
 #' # Setting up the model parameters
-#' true_params <- list(error_vars = c(1,1),
+#' true_params <- list(error_vars = c(1,1), # Length must be q
 #' joint_var = 1,
-#' indiv_vars = c(1,1),
-#' beta_vars = c(1, 1, rep(1, q)),
+#' indiv_vars = c(1,1), # Length must be q
+#' beta_vars = c(1, 1, rep(1, q)), # Length must be q+2 (intercept, joint, individual)
 #' response_vars = c(shape = 1, rate = 1))
 #'
 #' # Choose ranks
@@ -1123,7 +1124,34 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
 #' @export
 #'
 #' @examples
+#' # Setting up the data
+#' n <- 100
+#' p.vec <- c(75, 100)
+#' q <- 2
 #'
+#' # Generate data
+#' data.c3 <- bsfp_data(p.vec, n, ranks, true_params, s2nX = NULL, s2nY = NULL, response = "continuous", sparsity = FALSE)
+#'
+#' # Split into training and test set
+#' train.c3 <- data.c3$data
+#' train.c3[[1,1]] <- train.c3[[1,1]][,1:(n/2)]
+#' train.c3[[2,1]] <- train.c3[[2,1]][,1:(n/2)]
+#'
+#' Y.train.c3 <- data.c3$Y
+#' Y.train.c3[[1,1]] <- Y.train.c3[[1,1]][1:(n/2),,drop=FALSE]
+#'
+#' test.c3 <- data.c3$data
+#' test.c3[[1,1]] <- test.c3[[1,1]][,((n/2)+1):n]
+#' test.c3[[2,1]] <- test.c3[[2,1]][,((n/2)+1):n]
+#'
+#' Y.test.c3 <- data.c3$Y
+#' Y.test.c3[[1,1]] <- Y.test.c3[[1,1]][((n/2)+1):n,,drop=FALSE]
+#'
+#' # Run BSFP for 1000 iterations
+#' bsfp.train.c3 <- bsfp(data = train.c3, Y = Y.train.c3, nsample = nsample)
+#'
+#' # Run BSFP.predict for 1000 iterations on held-out test data
+#' bsfp.test.c3 <- bsfp.predict(bsfp.fit = bsfp.train.c3, test_data = test.c3, Y_test = Y.test.c3, nsample = nsample)
 
 bsfp.predict <- function(bsfp.fit, test_data, Y_test, model_params = NULL, sparsity = FALSE, nsample, progress = TRUE, starting_values = NULL) {
 

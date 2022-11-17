@@ -2,13 +2,12 @@
 % Please edit documentation in R/bsfp.R
 \name{bsfp.predict}
 \alias{bsfp.predict}
-\title{bsfp.Predict}
+\title{bsfp.predict}
 \usage{
 bsfp.predict(
   bsfp.fit,
   test_data,
   Y_test,
-  nninit = TRUE,
   model_params = NULL,
   sparsity = FALSE,
   nsample,
@@ -17,25 +16,43 @@ bsfp.predict(
 )
 }
 \arguments{
-\item{Y_test}{Column vector with outcome on test samples or NULL}
+\item{bsfp.fit}{Results from fitting \code{bsfp} on training data.}
 
-\item{nninit}{Should the model be initialized with a nuclear norm penalized
-objective? If FALSE, provide ranks.}
+\item{Y_test}{Column vector with outcome on test samples or \code{NULL}}
 
-\item{model_params}{(error_vars, joint_vars, indiv_vars, beta_vars = NULL, response_vars).
-May be given by BSFP.fit}
+\item{model_params}{May be \code{NULL} if \code{model_params=NULL} in \code{bsfp} fit.
+Otherwise, specify as \code{(error_vars, joint_vars, indiv_vars, beta_vars, response_vars)}.}
 
-\item{nsample}{Number of Gibbs sampling iterations}
+\item{nsample}{Integer specifing number of Gibbs sampling iterations}
 
-\item{progress}{Should the progress of the sampler be displayed?}
+\item{progress}{Boolean determining if progress of the sampler be displayed}
 
-\item{starting_values}{list of starting values for V, U, W, Vs. If NULL and
-nninit = TRUE, init with UNIFAC. If NULL and nninit = FALSE, init from prior.
-If not NULL, will init with provided starting values unless nninit.}
-
-\item{bpmf.fit}{Results from a training bpmf.fit}
+\item{starting_values}{List of starting values for \eqn{\mathbf{V}, \mathbf{U}_s, \mathbf{W}_s, \mathbf{V}_s} for \eqn{s=1,\dots, q}.
+If \code{NULL}, initialize from prior.}
+}
+\value{
+Returns a list with the following parameters:
+\item{test_data}{Test data provided by user}
+\item{Y_test}{Test response provided by user}
+\item{J.draw}{List of posterior samples for the estimated joint structure for each source}
+\item{A.draw}{List of posterior samples for the estimated individual structure for each source}
+\item{S.draw}{List of posterior samples for the overall (joint + individual) structure for each source}
+\item{EY.draw}{List of posterior samples for the E(Y|X), i.e. \eqn{\beta_0 + \mathbf{V}\boldsymbol{\beta}_{joint} + \sum_{s=1}^q \mathbf{V}_s \boldsymbol{\beta}_s} for each Gibbs sampling iteration.}
+\item{V.draw}{List of posterior samples for joint scores, \eqn{\mathbf{V}}}
+\item{U.train}{List of posterior samples for joint loadings for each source, \eqn{\mathbf{U}_s} for \eqn{s=1,\dots,q} given by the training BSFP fit}
+\item{W.train}{List of posterior samples for individual loadings for each source,  \eqn{\mathbf{W}_s} for \sqn{s=1,\dots,q} given by the training BSFP fit}
+\item{Vs.draw}{List of posterior samples for individual scores for each source, \eqn{\mathbf{V}_s} for \sqn{s=1,\dots,q}}
+\item{ranks}{Vector with the estimated joint and individual ranks. \code{ranks[1]} is the estimated joint rank. \code{ranks[2:(q+1)]} correspond to the individual ranks for each source.}
+\item{tau2.train}{List of posterior samples for the response variance if the response was continuous given by training BSFP fit}
+\item{beta.train}{List of posterior samples for the regression coefficients used in the predictive model given by training BSFP fit}
 }
 \description{
-Gibbs sampling algorithm for sampling the underlying structure and the
-regression coefficient vector for a response vector for unseen test data.
+Gibbs sampling algorithm for sampling new scores for unseen test data.
+Given BSFP was fit on training data (training sources and outcome), sample
+the scores and regression coefficient for held-out test data sources and outcome.
+}
+\details{
+Generate new scores for held-out test data based on a
+training fit of BSFP. Uses the estimated ranks and joint and individual loadings. Cannot
+be used if missing values are present in test data.
 }
