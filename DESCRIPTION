@@ -3,7 +3,7 @@ Type: Package
 Title: Bayesian Simultaneous Factorization and Prediction
 Version: 0.1.0
 Author: Sarah Samorodnitsky
-Maintainer: Sarah Samorodnitsky <samor007 at umn dot edu>
+Maintainer: Sarah Samorodnitsky <samor007@umn.edu>
 Description: Simultaneously decompose variation across multi-omic data and predict
     continuous or binary outcome in Bayesian framework. 
 License: GPL (>= 3)
