@@ -1693,7 +1693,55 @@ bsfp.predict <- function(bsfp.fit, test_data, Y_test, model_params = NULL, spars
 #' @param tau2.draw Posterior samples for error variance in Y if response is given
 #' @param Xm.draw Imputed values for missing values in X
 #' @param Ym.draw Imputed values for unobserved outcomes in Y
+#'
+#' @details Generate posterior summaries (posterior mean, 95\% credible intervals)
+#' for the estimated factors from the joint and individual structures. May then be
+#' used to plot the contributions of each biomarker to a factor (loadings) and the
+#' expression levels of each factor across samples (scores). This function is
+#' intended to be used after alignment using \code{match_align_bsfp()}
+#'
+#'
 #' @export
+#'
+#' @examples
+#' # Setting up the data
+#' n <- 50
+#' p.vec <- c(75, 100)
+#' q <- 2
+#'
+#' # Setting up the model parameters
+#' true_params <- list(error_vars = c(1,1),
+#'                     joint_var = 1,
+#'                    indiv_vars = c(1,1),
+#'                    beta_vars = c(1, 1, rep(1, q)),
+#'                    response_vars = c(shape = 1, rate = 1))
+#'
+#' # Choose ranks
+#' r <- 3
+#' r.vec <- c(3, 3)
+#' ranks <- c(r, r.vec)
+#'
+#' # Number of posterior sampling iterations
+#' nsample <- 1000
+#' burnin <- nsample/2
+#' iters_burnin <- (burnin+1):nsample
+#'
+#' # Generate data
+#' data.c1 <- bsfp_data(p.vec, n, ranks, true_params, s2nX = NULL, s2nY = NULL, response = "continuous", sparsity = FALSE)
+#'
+#' # Run BSFP for 1000 iterations
+#' bsfp.c1 <- bsfp(data = data.c1$data, Y = data.c1$Y, nsample = nsample)
+#'
+#' # Run the alignment algorithm
+#' alignment.c1 <- match_align_bsfp(BSFP.fit = bsfp.c1, y = data.c1$Y,
+#'                                  model_params = bsfp.c1$model_params,
+#'                                  p.vec = p.vec, iters_burnin = iters_burnin)
+#'
+#' # Summarize aligned factors
+#' summary.aligned.c1 <- summarize_factors(data = data.c1$data, Y = data.c1$Y,
+#'                                         iters_burnin = iters_burnin,
+#'                                         aligned_results = alignment.c1,
+#'                                         ranks = bsfp.c1$ranks, tau2.draw = bsfp.c1$tau2.draw)
 
 summarize_factors <- function(data, Y = NULL, iters_burnin,
                               aligned_results, ranks, tau2.draw = NULL, Xm.draw = NULL, Ym.draw = NULL) {
@@ -2079,7 +2127,7 @@ summarize_factors <- function(data, Y = NULL, iters_burnin,
 
 }
 
-#' log_joint_density:
+#' Log-joint density of Bayesian Simultaneous Factorization and Prediction
 #'
 #' Calculate the log-joint density of the estimated model at a given posterior
 #' sampling iteration to facilitate checking convergence.
