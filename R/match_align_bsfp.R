@@ -16,10 +16,9 @@
 #' @details The estimated loadings and scores from BSFP are not identifiable due to
 #' rotation, permutation, and sign invariance. This invariance obstructs using posterior
 #' summaries to study the estimated factors. To address these issues, we adapt the MatchAlign
-#' algorithm proposed by Poworoznek et al. (2021) to address these ambiguities. This code was
-#' adapted from the \code{infinitefactor} package developed by Evan Poworoznek. This function
+#' algorithm proposed by Poworoznek et al. (2021) to address these ambiguities. This function
 #' formats the posterior samples for the loadings and scores in the appropriate format to
-#' run the alignment and returns the final aligned factors. The factors within each structure
+#' run the MatchAlign alignment and returns the final aligned factors. The factors within each structure
 #' are ordered from most-to-least variance explained.
 #'
 #' This also allows users to attempt
@@ -440,7 +439,9 @@ match_align_bsfp <- function(BSFP.fit, y = NULL, model_params, p.vec, iters_burn
 #' Given results from BSFP, apply Varimax rotation and greedy alignment
 #' using the MatchAlign algorithm to adjust for rotational, permutation,
 #' and sign invariance. This function is used within the match_align_bsfp
-#' function only.
+#' function only. Code was
+#' adapted from the \code{infinitefactor} package developed by Evan Poworoznek.
+#'
 #' @param lambda (list): list of loadings matrices. For BSFP, this will be combined
 #'                loadings and betas.
 #' @param eta (list): list of scores matrices

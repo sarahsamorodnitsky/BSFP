@@ -29,7 +29,8 @@ pivot used in the alignment.
 Given results from BSFP, apply Varimax rotation and greedy alignment
 using the MatchAlign algorithm to adjust for rotational, permutation,
 and sign invariance. This function is used within the match_align_bsfp
-function only.
+function only. Code was
+adapted from the \code{infinitefactor} package developed by Evan Poworoznek.
 }
 \details{
 This is an interval function that runs the MatchAlign algorithm,
