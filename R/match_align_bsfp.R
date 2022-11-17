@@ -24,9 +24,8 @@
 #' This also allows users to attempt
 #' different pivots than the one used by default to examine sensitivity.
 #'
-#' #' @references
-#' \insertRef{poworoznek2021efficiently}{BSFP}
-#' \insertRef{poworoznek2020package}{BSFP}
+#' @references
+#' \insertAllCited{}
 #'
 #' @returns This function returns the aligned loadings, scores, and regression coefficients.
 #' \item{joint.scores.final}{List of joint scores after alignment.}
@@ -460,8 +459,7 @@ match_align_bsfp <- function(BSFP.fit, y = NULL, model_params, p.vec, iters_burn
 #' As is done in Poworoznek et al. (2021), this function uses the median condition number to identify a pivot.
 #'
 #' @references
-#' \insertRef{poworoznek2021efficiently}{BSFP}
-#' \insertRef{poworoznek2020package}{BSFP}
+#' \insertAllCited{}
 #'
 #' @returns This function returns a list of aligned loadings and scores, as well as the index of the
 #' pivot used in the alignment.
