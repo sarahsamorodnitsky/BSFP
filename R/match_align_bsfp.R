@@ -12,7 +12,67 @@
 #' individual structures or indices for pivots from posterior samples
 #' @param index (int): for sensitivity of the results, choose a pivot that falls
 #' the some indices away from the chosen pivot (index specifies the number of indices)
+#'
+#' @details The estimated loadings and scores from BSFP are not identifiable due to
+#' rotation, permutation, and sign invariance. This invariance obstructs using posterior
+#' summaries to study the estimated factors. To address these issues, we adapt the MatchAlign
+#' algorithm proposed by Poworoznek et al. (2021) to address these ambiguities. This code was
+#' adapted from the \code{infinitefactor} package developed by Evan Poworoznek. This function
+#' formats the posterior samples for the loadings and scores in the appropriate format to
+#' run the alignment and returns the final aligned factors. The factors within each structure
+#' are ordered from most-to-least variance explained.
+#'
+#' This also allows users to attempt
+#' different pivots than the one used by default to examine sensitivity.
+#'
+#' @returns This function returns the aligned loadings, scores, and regression coefficients.
+#' \item{joint.scores.final}{List of joint scores after alignment.}
+#' \item{joint.loadings.final}{List of joint loadings after alignment.}
+#' \item{joint.betas.final}{List of regression coefficients corresponding to joint factors
+#' after alignment.}
+#' \item{joint_pivot_index}{Returns the index after burn-in of the pivot used in the alignment.
+#' This can be used to further examine sensitivity.}
+#' \item{individual.scores.final}{List of individual scores for each source after alignment.}
+#' \item{individual.loadings.final}{List of individual loadings for each source after alignment.}
+#' \item{individual.betas.final}{List of regression coefficients corresponding to individual
+#' factors after alignment.}
+#' \item{individual_pivot_index}{Returns the indices after burn-in of the pivot used in the alignment
+#' of the individual factors for each source. This can be used to further examine sensitivity.}
+#'
 #' @export
+#'
+#' @examples
+#' # Setting up the data
+#' n <- 50
+#' p.vec <- c(75, 100)
+#' q <- 2
+#'
+#' # Setting up the model parameters
+#' true_params <- list(error_vars = c(1,1),
+#'                     joint_var = 1,
+#'                     indiv_vars = c(1,1),
+#'                     beta_vars = c(1, 1, rep(1, q)),
+#'                     response_vars = c(shape = 1, rate = 1))
+#'
+#' # Choose ranks
+#' r <- 3
+#' r.vec <- c(3, 3)
+#' ranks <- c(r, r.vec)
+#'
+#' # Number of posterior sampling iterations
+#' nsample <- 1000
+#' burnin <- nsample/2
+#' iters_burnin <- (burnin+1):nsample
+#' # Generate data
+#' data.c1 <- bsfp_data(p.vec, n, ranks, true_params, s2nX = NULL, s2nY = NULL, response = "continuous", sparsity = FALSE)
+#'
+#' # Run BSFP for 1000 iterations
+#' bsfp.c1 <- bsfp(data = data.c1$data, Y = data.c1$Y, nsample = nsample)
+#'
+#' # Run the alignment algorithm
+#' alignment.c1 <- match_align_bsfp(BSFP.fit = bsfp.c1, y = data.c1$Y,
+#'                                  model_params = bsfp.c1$model_params,
+#'                                  p.vec = p.vec, iters_burnin = iters_burnin)
 
 match_align_bsfp <- function(BSFP.fit, y = NULL, model_params, p.vec, iters_burnin, piv.list = NULL, index = 0) {
 
@@ -384,14 +444,25 @@ match_align_bsfp <- function(BSFP.fit, y = NULL, model_params, p.vec, iters_burn
 #' @param lambda (list): list of loadings matrices. For BSFP, this will be combined
 #'                loadings and betas.
 #' @param eta (list): list of scores matrices
-#' @param var_betas (matrix): prior variance matrix for regression coefficients, if
-#'                      considering an outcome
 #' @param piv (matrix OR int): user-provided pivot. If NULL, use median largest singular value.
 #'                      If matrix, use as pivot. If integer, use corresponding Varimax-rotated posterior sample
 #' @param index (int): allows user to choose a different pivot for sensitivity analysis.
 #'                     0 uses the default pivot. Could be positive or negative.
+#'
+#' @details This is an interval function that runs the MatchAlign algorithm,
+#' originally developed by Evan Poworoznek, on structures estimated by the BSFP model.
+#' Allows users to specify their own pivot or use a pivot several indices away from the default pivot.
+#' As is done in Poworoznek et al. (2021), this function uses the median condition number to identify a pivot.
+#'
+#' @returns This function returns a list of aligned loadings and scores, as well as the index of the
+#' pivot used in the alignment.
+#' \item{lambda}{List of loadings after alignment.}
+#' \item{eta}{List of scores after alignment.}
+#' \item{pivot_index}{Int specifying the index of the pivot used in the alignment.}
+#'
 #' @export
-jointRot_multi <- function(lambda, eta, piv = NULL, y = NULL, var_betas = NULL, index = 0) {
+
+jointRot_multi <- function(lambda, eta, piv = NULL, index = 0) {
 
   # Apply the Varimax rotation to the loadings
   vari = lapply(lambda, varimax)

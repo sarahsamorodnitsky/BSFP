@@ -31,7 +31,68 @@ individual structures or indices for pivots from posterior samples}
 \item{index}{(int): for sensitivity of the results, choose a pivot that falls
 the some indices away from the chosen pivot (index specifies the number of indices)}
 }
+\value{
+This function returns the aligned loadings, scores, and regression coefficients.
+\item{joint.scores.final}{List of joint scores after alignment.}
+\item{joint.loadings.final}{List of joint loadings after alignment.}
+\item{joint.betas.final}{List of regression coefficients corresponding to joint factors
+after alignment.}
+\item{joint_pivot_index}{Returns the index after burn-in of the pivot used in the alignment.
+This can be used to further examine sensitivity.}
+\item{individual.scores.final}{List of individual scores for each source after alignment.}
+\item{individual.loadings.final}{List of individual loadings for each source after alignment.}
+\item{individual.betas.final}{List of regression coefficients corresponding to individual
+factors after alignment.}
+\item{individual_pivot_index}{Returns the indices after burn-in of the pivot used in the alignment
+of the individual factors for each source. This can be used to further examine sensitivity.}
+}
 \description{
 Correcting for rotation, permutation, and sign invariance by applying the
 MatchAlign algorithm (Poworoznek et al. (2021)) to results from BSFP fit.
+}
+\details{
+The estimated loadings and scores from BSFP are not identifiable due to
+rotation, permutation, and sign invariance. This invariance obstructs using posterior
+summaries to study the estimated factors. To address these issues, we adapt the MatchAlign
+algorithm proposed by Poworoznek et al. (2021) to address these ambiguities. This code was
+adapted from the \code{infinitefactor} package developed by Evan Poworoznek. This function
+formats the posterior samples for the loadings and scores in the appropriate format to
+run the alignment and returns the final aligned factors. The factors within each structure
+are ordered from most-to-least variance explained.
+
+This also allows users to attempt
+different pivots than the one used by default to examine sensitivity.
+}
+\examples{
+# Setting up the data
+n <- 50
+p.vec <- c(75, 100)
+q <- 2
+
+# Setting up the model parameters
+true_params <- list(error_vars = c(1,1),
+                    joint_var = 1,
+                    indiv_vars = c(1,1),
+                    beta_vars = c(1, 1, rep(1, q)),
+                    response_vars = c(shape = 1, rate = 1))
+
+# Choose ranks
+r <- 3
+r.vec <- c(3, 3)
+ranks <- c(r, r.vec)
+
+# Number of posterior sampling iterations
+nsample <- 1000
+burnin <- nsample/2
+iters_burnin <- (burnin+1):nsample
+# Generate data
+data.c1 <- bsfp_data(p.vec, n, ranks, true_params, s2nX = NULL, s2nY = NULL, response = "continuous", sparsity = FALSE)
+
+# Run BSFP for 1000 iterations
+bsfp.c1 <- bsfp(data = data.c1$data, Y = data.c1$Y, nsample = nsample)
+
+# Run the alignment algorithm
+alignment.c1 <- match_align_bsfp(BSFP.fit = bsfp.c1, y = data.c1$Y,
+                                 model_params = bsfp.c1$model_params,
+                                 p.vec = p.vec, iters_burnin = iters_burnin)
 }

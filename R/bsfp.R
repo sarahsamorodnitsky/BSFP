@@ -2464,7 +2464,6 @@ log_joint_density <- function(data, Y = NULL, U.iter, V.iter, W.iter, Vs.iter, m
 #' data.c2 <- bsfp_data(p.vec, n, ranks, true_params, s2nX = NULL, s2nY = NULL, response = "continuous", sparsity = FALSE,
 #' missingness = "missingness_in_data", missing_data_type = "entrywise", prop_missing = 0.1)
 
-
 bsfp_data <- function(p.vec, n, ranks, true_params, s2nX = NULL, s2nY = NULL, response = NULL, missingness = NULL, missing_data_type = NULL, prop_missing = NULL, sparsity, identically_zero = FALSE, num_in_spike = NULL) {
 
   # -------------------------------------------------------------------------

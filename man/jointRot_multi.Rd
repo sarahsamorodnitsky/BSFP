@@ -4,7 +4,7 @@
 \alias{jointRot_multi}
 \title{MatchAlign Algorithm (code adapted from infinitefactor package by Evan Poworoznek (2021))}
 \usage{
-jointRot_multi(lambda, eta, piv = NULL, y = NULL, var_betas = NULL, index = 0)
+jointRot_multi(lambda, eta, piv = NULL, index = 0)
 }
 \arguments{
 \item{lambda}{(list): list of loadings matrices. For BSFP, this will be combined
@@ -15,15 +15,25 @@ loadings and betas.}
 \item{piv}{(matrix OR int): user-provided pivot. If NULL, use median largest singular value.
 If matrix, use as pivot. If integer, use corresponding Varimax-rotated posterior sample}
 
-\item{var_betas}{(matrix): prior variance matrix for regression coefficients, if
-considering an outcome}
-
 \item{index}{(int): allows user to choose a different pivot for sensitivity analysis.
 0 uses the default pivot. Could be positive or negative.}
+}
+\value{
+This function returns a list of aligned loadings and scores, as well as the index of the
+pivot used in the alignment.
+\item{lambda}{List of loadings after alignment.}
+\item{eta}{List of scores after alignment.}
+\item{pivot_index}{Int specifying the index of the pivot used in the alignment.}
 }
 \description{
 Given results from BSFP, apply Varimax rotation and greedy alignment
 using the MatchAlign algorithm to adjust for rotational, permutation,
 and sign invariance. This function is used within the match_align_bsfp
 function only.
+}
+\details{
+This is an interval function that runs the MatchAlign algorithm,
+originally developed by Evan Poworoznek, on structures estimated by the BSFP model.
+Allows users to specify their own pivot or use a pivot several indices away from the default pivot.
+As is done in Poworoznek et al. (2021), this function uses the median condition number to identify a pivot.
 }
