@@ -38,3 +38,7 @@ originally developed by Evan Poworoznek, on structures estimated by the BSFP mod
 Allows users to specify their own pivot or use a pivot several indices away from the default pivot.
 As is done in Poworoznek et al. (2021), this function uses the median condition number to identify a pivot.
 }
+\references{
+\insertRef{poworoznek2021efficiently}{BSFP}
+\insertRef{poworoznek2020package}{BSFP}
+}

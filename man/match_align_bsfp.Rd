@@ -61,6 +61,10 @@ are ordered from most-to-least variance explained.
 
 This also allows users to attempt
 different pivots than the one used by default to examine sensitivity.
+
+#' @references
+\insertRef{poworoznek2021efficiently}{BSFP}
+\insertRef{poworoznek2020package}{BSFP}
 }
 \examples{
 # Setting up the data

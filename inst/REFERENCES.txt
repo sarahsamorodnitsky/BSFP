@@ -1,0 +1,12 @@
+@article{poworoznek2021efficiently,
+  title={Efficiently resolving rotational ambiguity in Bayesian matrix sampling with matching},
+  author={Poworoznek, Evan and Ferrari, Federico and Dunson, David},
+  journal={arXiv preprint arXiv:2107.13783},
+  year={2021}
+}
+
+@article{poworoznek2020package,
+  title={Package ‘infinitefactor’},
+  author={Poworoznek, Evan and Poworoznek, Maintainer Evan},
+  year={2020}
+}
