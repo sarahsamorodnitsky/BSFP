@@ -2179,7 +2179,57 @@ summarize_factors <- function(data, Y = NULL, iters_burnin,
 #' @param tau2.iter Posterior draw for estimated error variance in Y at a given iteration
 #' @param Xm.iter Imputed values for unobserved X values at a given iteration
 #' @param Ym.iter Imputed values for unobserved Y values at a given iteration
+#'
+#' @details Calculates the log-joint density of the BSFP model at each posterior sampling iteration.
+#' Use to determine if model appears to have converged. We expect to see the log-joint density
+#' increase and then plateau after convergence. Upon convergence, the log-joint density should
+#' bounce around randomly.
+#'
+#' @returns Returns a single value representing the log-joint density at a given posteiror
+#' sampling iteration.
+#'
 #' @export
+#'
+#' @examples
+#' # Setting up the data
+#' n <- 50
+#' p.vec <- c(75, 100)
+#' q <- 2
+#'
+#' # Setting up the model parameters
+#' true_params <- list(error_vars = c(1,1),
+#'                     joint_var = 1,
+#'                     indiv_vars = c(1,1),
+#'                     beta_vars = c(1, 1, rep(1, q)),
+#'                     response_vars = c(shape = 1, rate = 1))
+#'
+#' # Choose ranks
+#' r <- 3
+#' r.vec <- c(3, 3)
+#' ranks <- c(r, r.vec)
+#'
+#' # Number of posterior sampling iterations
+#' nsample <- 1000
+#' burnin <- nsample/2
+#' iters_burnin <- (burnin+1):nsample
+#' # Generate data
+#' data.c1 <- bsfp_data(p.vec, n, ranks, true_params, s2nX = NULL, s2nY = NULL, response = "continuous", sparsity = FALSE)
+#'
+#' # Run BSFP for 1000 iterations
+#' bsfp.c1 <- bsfp(data = data.c1$data, Y = data.c1$Y, nsample = nsample)
+#'
+#' # Check convergence
+#' log_joint_density_by_iter.c1 <- sapply(1:nsample, function(iter) {
+#'   log_joint_density(data = data.c1$data, Y = data.c1$Y,
+#'                     U.iter = bsfp.c1$U.draw[[iter]],
+#'                     V.iter = bsfp.c1$V.draw[[iter]],
+#'                     W.iter = bsfp.c1$W.draw[[iter]],
+#'                     Vs.iter = bsfp.c1$Vs.draw[[iter]],
+#'                     model_params = bsfp.c1$model_params,
+#'                    ranks = bsfp.c1$ranks,
+#'                    beta.iter = bsfp.c1$beta.draw[[iter]],
+#'                    tau2.iter = bsfp.c1$tau2.draw[[iter]])
+#' })
 
 log_joint_density <- function(data, Y = NULL, U.iter, V.iter, W.iter, Vs.iter, model_params, ranks, beta.iter = NULL, tau2.iter = NULL, Xm.iter = NULL, Ym.iter = NULL) {
 
