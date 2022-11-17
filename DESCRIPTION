@@ -13,5 +13,6 @@ Suggests:
     knitr,
     rmarkdown
 VignetteBuilder: knitr
-Imports: MASS, Matrix, truncnorm, infinitefactor
+Imports: MASS, Matrix, truncnorm, infinitefactor, Rdpack
+RdMacros: Rdpack
 RoxygenNote: 7.2.1
