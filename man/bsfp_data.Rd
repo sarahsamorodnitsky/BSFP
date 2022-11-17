@@ -55,10 +55,75 @@ if generating response with sparsity. NULL if sparsity=FALSE. Should have an
 integer for joint and each individual structure. May be set to NULL and
 the number of factors in the spike will be determined randomly.}
 }
+\value{
+Returns a list of generated datasets and true parameter values.
+\item{data}{Returns the observed data without missingness. Data is in matrix-list format,
+where each dataset is contained within a list entry in a larger matrix object.}
+\item{Y}{Returns the observed response vector. This will not contain any missingness.}
+\item{missing_data}{Returns a version of the observed data with missingness induced.
+Missing values are represented with NAs. If no missingness in the data, this value is \code{NULL}.}
+\item{missing_obs}{Indices corresponding to missing entries in each dataset. The indices
+refer to results from \code{which(is.na(data[[s,1]]))} for \eqn{s=1,\dots, q}.
+If no missingness in the data, this value is \code{NULL}.}
+\item{Y_missing}{The response vector with missingness induced. Missing values are represented
+by NAs. If no missingness in the response, this value is \code{NULL}.}
+\item{s2nX}{User-provided signal-to-noise ratio in the data. If not provided, is \code{NULL}.}
+\item{s2nX_coef}{Coefficient used to scale the data structure to have the given \code{s2nX}.
+If no \code{s2nX} is specified, this value is \code{NULL}.}
+\item{s2nY}{User-provided signal-to-noise ratio in the response If not provided, is \code{NULL}.}
+\item{s2nY_coef}{Coefficient used to scale \eqn{\mathbb{E}(y|X)} to have the given \code{s2nX}.
+If no \code{s2nY} is specified, this value is \code{NULL}.}
+\item{joint.structure}{Returns the true underlying joint structure for each source in matrix-list form.
+The joint structure is identifiable by BSFP. }
+\item{indiv.structure}{Returns the true underlying individual structure for each source in matrix-list form.
+The individual structure is identifiable by BSFP.}
+\item{V}{The joint scores used to construct the joint structure. This is not identifiable by
+BSFP. Access the scores by \code{V[[1,1]]}}
+\item{U}{The joint loadings used to construct the joint structure. This is not identifiable by
+BSFP. Access the loadings for source \eqn{s} by \code{U[[s,1]]}.}
+\item{Vs}{The individual scores used to construct the individual structure. This is not identifiable
+by BSFP. Access the scores for source \eqn{s} by \code{Vs[[1,s]]}.}
+\item{W}{The individual loadings used to construct the individual structure. This is not identifiable
+by BSFP. Access the loadings for source \eqn{s} by \code{W[[s,s]]}. \code{W[[s,ss]] for \eqn{ss \neq s}
+is equal to 0.}}
+\item{beta}{The intercept and regression coefficients for the joint and individual factors.}
+\item{EY}{The conditional expectation of the response, i.e. \eqn{\mathbb{E}(y|X)}.}
+\item{tau2}{The true variance of a continuous response vector. If \code{response="binary"}, this
+value is \code{NULL}.}
+\item{gamma}{The true spike-and-slab indicators if response vector is generated with sparsity.
+1 reflects inclusion, 0 reflects exclusion.}
+\item{p.prior}{The prior inclusion probability for the spike-and-slab prior if the response
+vector is generated with sparsity.}
+}
 \description{
-Generate fake data according to BSF/BSFP model
+Generate simulated data according to BSFP model for testing and simulation purposes.
 }
 \details{
-Generate data according to the BSF and BSFP models. Use for examples or
-simulations to assess model performance.
+Generate data according to the BSFP models. Use for examples or
+simulations to assess model performance. Can scale data sources and reponse
+vector to accommodate different levels of signal-to-noise ratios. Can also
+accommodate different kinds of missingness mechanisms (missing-at-random
+and missingness not at random). This includes removing entire samples from a
+source. Sparsity arguments are for testing purposes only and the BSFP model
+does not accommodate sparsity in the predictive model.
+}
+\examples{
+# Setting up the data
+n <- 50
+p.vec <- c(75, 100)
+q <- 2
+
+# Setting up the model parameters
+true_params <- list(error_vars = c(1,1),
+                  joint_var = 1,
+                    indiv_vars = c(1,1),
+                    beta_vars = c(1, 1, rep(1, q)),
+                    response_vars = c(shape = 1, rate = 1))
+
+# Generate data with a continuous response and no missingness
+data.c1 <- bsfp_data(p.vec, n, ranks, true_params, s2nX = NULL, s2nY = NULL, response = "continuous", sparsity = FALSE)
+
+# Generate data with entrywise missingness
+data.c2 <- bsfp_data(p.vec, n, ranks, true_params, s2nX = NULL, s2nY = NULL, response = "continuous", sparsity = FALSE,
+missingness = "missingness_in_data", missing_data_type = "entrywise", prop_missing = 0.1)
 }
