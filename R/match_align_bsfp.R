@@ -426,9 +426,9 @@ jointRot_multi <- function(lambda, eta, piv = NULL, y = NULL, var_betas = NULL, 
   }
 
   # Match to the defined pivot
-  matches = lapply(loads, msfOUT, piv)
-  lamout = mapply(aplr, loads, matches, SIMPLIFY = FALSE)
-  etaout = mapply(aplr, rotfact, matches, SIMPLIFY = FALSE)
+  matches = lapply(loads, infinitefactor::msfOUT, piv)
+  lamout = mapply(infinitefactor::aplr, loads, matches, SIMPLIFY = FALSE)
+  etaout = mapply(infinitefactor::aplr, rotfact, matches, SIMPLIFY = FALSE)
 
   # Return
   return(list(lambda = lamout, eta = etaout, pivot_index = piv_index_to_return))
