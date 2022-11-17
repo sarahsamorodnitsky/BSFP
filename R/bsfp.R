@@ -276,9 +276,9 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
     # Saving the results
     sigma.mat <- rank_init$sigma.mat
     C <- rank_init$C
-    r <- rankMatrix(C[[1,1]])[[1]] # Joint rank
+    r <- Matrix::rankMatrix(C[[1,1]])[[1]] # Joint rank
     I <- rank_init$I
-    r.vec <- sapply(1:q, function(s) rankMatrix(I[[s,1]])) # Individual ranks
+    r.vec <- sapply(1:q, function(s) Matrix::rankMatrix(I[[s,1]])) # Individual ranks
 
     # Scaling the data
     for (s in 1:q) {
