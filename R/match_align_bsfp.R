@@ -12,6 +12,7 @@
 #' individual structures or indices for pivots from posterior samples
 #' @param index (int): for sensitivity of the results, choose a pivot that falls
 #' the some indices away from the chosen pivot (index specifies the number of indices)
+#' @export
 
 match_align_bsfp <- function(BSFP.fit, y = NULL, model_params, p.vec, iters_burnin, piv.list = NULL, index = 0) {
 
