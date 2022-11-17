@@ -458,6 +458,7 @@ match_align_bsfp <- function(BSFP.fit, y = NULL, model_params, p.vec, iters_burn
 #' Allows users to specify their own pivot or use a pivot several indices away from the default pivot.
 #' As is done in Poworoznek et al. (2021), this function uses the median condition number to identify a pivot.
 #'
+#' @importFrom Rdpack reprompt
 #' @references
 #' \insertAllCited{}
 #'
