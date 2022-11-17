@@ -35,6 +35,89 @@ May be NULL if no outcome is given. May contain NAs if there are missing outcome
 
 \item{Ym.draw}{Imputed values for unobserved outcomes in Y}
 }
+\value{
+Returns a list of posterior summaries for the joint and individual loadings and scores,
+regression coefficients, estimated error variance in a continuous response, missing data
+imputation for missing values in the sources and in the outcome.
+
+This list contains the following elements:
+\item{joint.scores.summary}{List of matrices for each joint factor. Each matrix has \eqn{n} rows
+for each sample. The first column is the posterior mean score after burn-in for a given sample.
+Then gives the lower and upper bounds for the 95\% credible interval. If no joint structure
+was estimated, then returns \code{NULL}.}
+\item{joint.loadings.summary}{List of lists for each joint factor. Each list contains \eqn{q} lists
+for the contributions of each biomarker from each source to the given factor. Provides the
+posterior mean and 95\% credible interval. If no joint structure was estimated, then returns \code{NULL}.}
+\item{individual.scores.summary}{List of length \eqn{q} with inners lists for each individual factor. Summarizes
+the score for each sample for each factor. Provides posterior mean and 95\% credible interval. If no individual
+structure from a source was estimated, returns \code{NULL}. }
+\item{individual.loadings.summary}{List of length \eqn{q} with inners lists for each individual factor.
+Summarizes the loadings for each biomarker from each source to the given factor. Provides posterior mean and 95\% credible interval. If no individual
+structure from a source was estimated, returns \code{NULL}.}
+\item{joint.betas.summary}{Summarizes the regression coefficients for the joint factors. Provides
+the posterior mean and 95\% credible interval. If no joint structure was estimated, returns \code{NULL}.}
+\item{individual.betas.summary}{List of length \eqn{q} with summaries for the regression coefficients
+of each individual factor from each source. Provides
+the posterior mean and 95\% credible interval. If no individual structure was estimated for a source,
+returns \code{NULL}.}
+\item{Xm.summary}{Returns a list of length \eqn{q} with posterior summaries (mean and 95\% credible interval)
+for each missing sample from each source. Rownames correspond to the source and the sample index. The index
+counts from the upper leftmost entry of the matrix, i.e. the index corresponds to \code{which(is.na(data[[s,1]]))}
+for \eqn{s=1,\dots,q}.}
+\item{Ym.summary}{Summarizes the imputed values for unobserved outcomes. Provides the posterior mean
+and 95\% credible interval. Indexes from \eqn{1,\dots, n}. If no unobserved outcomes, returns \code{NULL}.}
+\item{ranks}{Vector of length \eqn{q+1} of estimated joint and individual ranks. ranks[1] contains the joint rank.
+ranks[2:(q+1)] contains individual ranks.}
+\item{tau2.summary}{Posterior mean (mean and 95\% credible interval) of estimated error variance in
+continuous outcome, if given. If no continuous outcome was used, returns \code{NULL}.}
+}
 \description{
 Calculate posterior summaries of aligned estimated factors from BSFP.
+}
+\details{
+Generate posterior summaries (posterior mean, 95\% credible intervals)
+for the estimated factors from the joint and individual structures. May then be
+used to plot the contributions of each biomarker to a factor (loadings) and the
+expression levels of each factor across samples (scores). This function is
+intended to be used after alignment using \code{match_align_bsfp()}
+}
+\examples{
+# Setting up the data
+n <- 50
+p.vec <- c(75, 100)
+q <- 2
+
+# Setting up the model parameters
+true_params <- list(error_vars = c(1,1),
+                    joint_var = 1,
+                   indiv_vars = c(1,1),
+                   beta_vars = c(1, 1, rep(1, q)),
+                   response_vars = c(shape = 1, rate = 1))
+
+# Choose ranks
+r <- 3
+r.vec <- c(3, 3)
+ranks <- c(r, r.vec)
+
+# Number of posterior sampling iterations
+nsample <- 1000
+burnin <- nsample/2
+iters_burnin <- (burnin+1):nsample
+
+# Generate data
+data.c1 <- bsfp_data(p.vec, n, ranks, true_params, s2nX = NULL, s2nY = NULL, response = "continuous", sparsity = FALSE)
+
+# Run BSFP for 1000 iterations
+bsfp.c1 <- bsfp(data = data.c1$data, Y = data.c1$Y, nsample = nsample)
+
+# Run the alignment algorithm
+alignment.c1 <- match_align_bsfp(BSFP.fit = bsfp.c1, y = data.c1$Y,
+                                 model_params = bsfp.c1$model_params,
+                                 p.vec = p.vec, iters_burnin = iters_burnin)
+
+# Summarize aligned factors
+summary.aligned.c1 <- summarize_factors(data = data.c1$data, Y = data.c1$Y,
+                                        iters_burnin = iters_burnin,
+                                        aligned_results = alignment.c1,
+                                        ranks = bsfp.c1$ranks, tau2.draw = bsfp.c1$tau2.draw)
 }

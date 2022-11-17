@@ -58,3 +58,7 @@ the number of factors in the spike will be determined randomly.}
 \description{
 Generate fake data according to BSF/BSFP model
 }
+\details{
+Generate data according to the BSF and BSFP models. Use for examples or
+simulations to assess model performance.
+}

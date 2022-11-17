@@ -56,3 +56,33 @@ Generate new scores for held-out test data based on a
 training fit of BSFP. Uses the estimated ranks and joint and individual loadings. Cannot
 be used if missing values are present in test data.
 }
+\examples{
+# Setting up the data
+n <- 100
+p.vec <- c(75, 100)
+q <- 2
+
+# Generate data
+data.c3 <- bsfp_data(p.vec, n, ranks, true_params, s2nX = NULL, s2nY = NULL, response = "continuous", sparsity = FALSE)
+
+# Split into training and test set
+train.c3 <- data.c3$data
+train.c3[[1,1]] <- train.c3[[1,1]][,1:(n/2)]
+train.c3[[2,1]] <- train.c3[[2,1]][,1:(n/2)]
+
+Y.train.c3 <- data.c3$Y
+Y.train.c3[[1,1]] <- Y.train.c3[[1,1]][1:(n/2),,drop=FALSE]
+
+test.c3 <- data.c3$data
+test.c3[[1,1]] <- test.c3[[1,1]][,((n/2)+1):n]
+test.c3[[2,1]] <- test.c3[[2,1]][,((n/2)+1):n]
+
+Y.test.c3 <- data.c3$Y
+Y.test.c3[[1,1]] <- Y.test.c3[[1,1]][((n/2)+1):n,,drop=FALSE]
+
+# Run BSFP for 1000 iterations
+bsfp.train.c3 <- bsfp(data = train.c3, Y = Y.train.c3, nsample = nsample)
+
+# Run BSFP.predict for 1000 iterations on held-out test data
+bsfp.test.c3 <- bsfp.predict(bsfp.fit = bsfp.train.c3, test_data = test.c3, Y_test = Y.test.c3, nsample = nsample)
+}

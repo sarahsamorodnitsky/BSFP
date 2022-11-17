@@ -2,7 +2,7 @@
 % Please edit documentation in R/bsfp.R
 \name{log_joint_density}
 \alias{log_joint_density}
-\title{log_joint_density:}
+\title{Log-joint density of Bayesian Simultaneous Factorization and Prediction}
 \usage{
 log_joint_density(
   data,
