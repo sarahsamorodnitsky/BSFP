@@ -61,10 +61,6 @@ are ordered from most-to-least variance explained.
 
 This also allows users to attempt
 different pivots than the one used by default to examine sensitivity.
-
-#' @references
-\insertRef{poworoznek2021efficiently}{BSFP}
-\insertRef{poworoznek2020package}{BSFP}
 }
 \examples{
 # Setting up the data
@@ -98,4 +94,7 @@ bsfp.c1 <- bsfp(data = data.c1$data, Y = data.c1$Y, nsample = nsample)
 alignment.c1 <- match_align_bsfp(BSFP.fit = bsfp.c1, y = data.c1$Y,
                                  model_params = bsfp.c1$model_params,
                                  p.vec = p.vec, iters_burnin = iters_burnin)
+}
+\references{
+\insertAllCited{}
 }

@@ -39,6 +39,5 @@ Allows users to specify their own pivot or use a pivot several indices away from
 As is done in Poworoznek et al. (2021), this function uses the median condition number to identify a pivot.
 }
 \references{
-\insertRef{poworoznek2021efficiently}{BSFP}
-\insertRef{poworoznek2020package}{BSFP}
+\insertAllCited{}
 }
