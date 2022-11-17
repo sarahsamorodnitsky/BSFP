@@ -509,7 +509,7 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
 
     VStar0 <- cbind(1, do.call(cbind, V0.star), do.call(cbind, Vs0.star))
 
-    beta0 <- matrix(mvrnorm(1, mu = c(rep(0, n_beta)), Sigma = Sigma_beta))
+    beta0 <- matrix(MASS::mvrnorm(1, mu = c(rep(0, n_beta)), Sigma = Sigma_beta))
     Z0 <- matrix(rnorm(n, mean = VStar0 %*% beta0, sd = 1))
     tau20 <- matrix(1/rgamma(1, shape = shape, rate = rate))
 
@@ -719,7 +719,7 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
           V.draw[[iter+1]][[1,1]] <- t(matrix(sapply(1:n, function(i) {
             bv <-  tU_Sigma %*% X.iter[,i]
 
-            Vi <- mvrnorm(1, mu = Bv %*% bv, Sigma = Bv)
+            Vi <- MASS::mvrnorm(1, mu = Bv %*% bv, Sigma = Bv)
             Vi
           }), nrow = r))
         }
@@ -749,7 +749,7 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
           V.draw[[iter+1]][[1,1]] <- t(matrix(sapply(1:n, function(i) {
             bv <- tU_Sigma %*% X.iter[,i]
 
-            Vi <- mvrnorm(1, mu = Bv %*% bv, Sigma = Bv)
+            Vi <- MASS::mvrnorm(1, mu = Bv %*% bv, Sigma = Bv)
             Vi
           }), nrow = r))
         }
@@ -774,7 +774,7 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
           U.draw[[iter+1]][[s,1]] <- t(matrix(sapply(1:p.vec[s], function(j) {
             bu <- (1/error_vars[s]) * t(V.iter[[1,1]]) %*% Xs.iter[j, ]
 
-            U1j <- mvrnorm(1, mu = Bu %*% bu, Sigma = Bu)
+            U1j <- MASS::mvrnorm(1, mu = Bu %*% bu, Sigma = Bu)
             U1j
           }), nrow = r))
         }
@@ -801,7 +801,7 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
             Vs.draw[[iter+1]][[1,s]] <- t(matrix(sapply(1:n, function(i) {
               bvs <- (1/error_vars[s]) * t(W.iter[[s,s]]) %*% Xs.iter[, i]
 
-              Vsi <- mvrnorm(1, mu = Bvs %*% bvs, Sigma = Bvs)
+              Vsi <- MASS::mvrnorm(1, mu = Bvs %*% bvs, Sigma = Bvs)
               Vsi
             }), nrow = r.vec[s]))
           }
@@ -840,7 +840,7 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
             Vs.draw[[iter+1]][[1,s]] <- t(matrix(sapply(1:n, function(i) {
               bvs <- tW_Sigma %*% Xs.iter[, i]
 
-              Vsi <- mvrnorm(1, mu = Bvs %*% bvs, Sigma = Bvs)
+              Vsi <- MASS::mvrnorm(1, mu = Bvs %*% bvs, Sigma = Bvs)
               Vsi
             }), nrow = r.vec[s]))
           }
@@ -884,7 +884,7 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
           W.draw[[iter+1]][[s,s]] <- t(matrix(sapply(1:p.vec[s], function(j) {
             bws <- (1/error_vars[s]) * t(Vs.iter[[1,s]]) %*% Xs.iter[j,]
 
-            Wsj <- mvrnorm(1, mu = Bws %*% bws, Sigma = Bws)
+            Wsj <- MASS::mvrnorm(1, mu = Bws %*% bws, Sigma = Bws)
             Wsj
           }), nrow = r.vec[s]))
 
@@ -944,7 +944,7 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
         bbeta <- (1/tau2.iter[[1,1]]) * t(VStar.iter) %*% Y_complete
       }
 
-      beta.draw[[iter+1]][[1,1]] <- matrix(mvrnorm(1, mu = Bbeta %*% bbeta, Sigma = Bbeta), ncol = 1)
+      beta.draw[[iter+1]][[1,1]] <- matrix(MASS::mvrnorm(1, mu = Bbeta %*% bbeta, Sigma = Bbeta), ncol = 1)
 
       # Update the current value of beta
       beta.iter <- beta.draw[[iter+1]][[1,1]]
@@ -1431,7 +1431,7 @@ bsfp.predict <- function(bsfp.fit, test_data, Y_test, model_params = NULL, spars
         V.draw[[iter+1]][[1,1]] <- t(matrix(sapply(1:n, function(i) {
           bv <-  tU_Sigma %*% X.iter[,i]
 
-          Vi <- mvrnorm(1, mu = Bv %*% bv, Sigma = Bv)
+          Vi <- MASS::mvrnorm(1, mu = Bv %*% bv, Sigma = Bv)
           Vi
         }), nrow = r))
       }
@@ -1461,7 +1461,7 @@ bsfp.predict <- function(bsfp.fit, test_data, Y_test, model_params = NULL, spars
         V.draw[[iter+1]][[1,1]] <- t(matrix(sapply(1:n, function(i) {
           bv <- tU_Sigma %*% X.iter[,i]
 
-          Vi <- mvrnorm(1, mu = Bv %*% bv, Sigma = Bv)
+          Vi <- MASS::mvrnorm(1, mu = Bv %*% bv, Sigma = Bv)
           Vi
         }), nrow = r))
       }
@@ -1494,7 +1494,7 @@ bsfp.predict <- function(bsfp.fit, test_data, Y_test, model_params = NULL, spars
           Vs.draw[[iter+1]][[1,s]] <- t(matrix(sapply(1:n, function(i) {
             bvs <- (1/error_vars[s]) * t(W.iter[[s,s]]) %*% Xs.iter[, i]
 
-            Vsi <- mvrnorm(1, mu = Bvs %*% bvs, Sigma = Bvs)
+            Vsi <- MASS::mvrnorm(1, mu = Bvs %*% bvs, Sigma = Bvs)
             Vsi
           }), nrow = r.vec[s]))
         }
@@ -1533,7 +1533,7 @@ bsfp.predict <- function(bsfp.fit, test_data, Y_test, model_params = NULL, spars
           Vs.draw[[iter+1]][[1,s]] <- t(matrix(sapply(1:n, function(i) {
             bvs <- tW_Sigma %*% Xs.iter[, i]
 
-            Vsi <- mvrnorm(1, mu = Bvs %*% bvs, Sigma = Bvs)
+            Vsi <- MASS::mvrnorm(1, mu = Bvs %*% bvs, Sigma = Bvs)
             Vsi
           }), nrow = r.vec[s]))
         }
@@ -2388,7 +2388,7 @@ bsfp_data <- function(p.vec, n, ranks, true_params, s2nX = NULL, s2nY = NULL, re
     if (!sparsity) {
       # Generate betas
       beta <- matrix(list(), nrow = 1, ncol = 1)
-      beta[[1,1]] <- matrix(mvrnorm(1, mu = rep(0, n_beta), Sigma = Sigma_beta), ncol = 1)
+      beta[[1,1]] <- matrix(MASS::mvrnorm(1, mu = rep(0, n_beta), Sigma = Sigma_beta), ncol = 1)
       p.prior <- gamma <- matrix(list(), nrow = 1, ncol = 1)
     }
 
@@ -2430,7 +2430,7 @@ bsfp_data <- function(p.vec, n, ranks, true_params, s2nX = NULL, s2nY = NULL, re
 
       diag(Sigma_beta)[gamma == 0] <- 1/1000
       beta <- matrix(list(), nrow = 1, ncol = 1)
-      beta[[1,1]] <- matrix(mvrnorm(1, mu = rep(0, n_beta), Sigma = Sigma_beta), ncol = 1)
+      beta[[1,1]] <- matrix(MASS::mvrnorm(1, mu = rep(0, n_beta), Sigma = Sigma_beta), ncol = 1)
 
       # If desired, set spike coefficients to be identically 0
       if (identically_zero) {
