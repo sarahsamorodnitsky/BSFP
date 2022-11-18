@@ -9,7 +9,6 @@ bsfp.predict(
   test_data,
   Y_test,
   model_params = NULL,
-  sparsity = FALSE,
   nsample,
   progress = TRUE,
   starting_values = NULL
@@ -17,6 +16,8 @@ bsfp.predict(
 }
 \arguments{
 \item{bsfp.fit}{Results from fitting \code{bsfp} on training data.}
+
+\item{test_data}{Matrix-list dataset of held-out test data.}
 
 \item{Y_test}{Column vector with outcome on test samples or \code{NULL}}
 

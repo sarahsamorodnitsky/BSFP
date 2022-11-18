@@ -995,9 +995,9 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
       if (response_type == "binary") {
         Z.draw[[iter+1]][[1,1]] <- matrix(sapply(1:n, function(i) {
           if (Y_complete[i,] == 1) {
-            rtruncnorm(1, a = 0, mean = (VStar.iter %*% beta.iter)[i,], sd = 1)
+            truncnorm::rtruncnorm(1, a = 0, mean = (VStar.iter %*% beta.iter)[i,], sd = 1)
           } else {
-            rtruncnorm(1, b = 0, mean = (VStar.iter %*% beta.iter)[i,], sd = 1)
+            truncnorm::rtruncnorm(1, b = 0, mean = (VStar.iter %*% beta.iter)[i,], sd = 1)
           }
         }), ncol = 1)
       }
@@ -1095,6 +1095,7 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
 #' Given BSFP was fit on training data (training sources and outcome), sample
 #' the scores and regression coefficient for held-out test data sources and outcome.
 #' @param bsfp.fit Results from fitting \code{bsfp} on training data.
+#' @param test_data Matrix-list dataset of held-out test data.
 #' @param Y_test Column vector with outcome on test samples or \code{NULL}
 #' @param model_params May be \code{NULL} if \code{model_params=NULL} in \code{bsfp} fit.
 #' Otherwise, specify as \code{(error_vars, joint_vars, indiv_vars, beta_vars, response_vars)}.
@@ -1171,7 +1172,7 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
 #' # Run BSFP.predict for 1000 iterations on held-out test data
 #' bsfp.test.c3 <- bsfp.predict(bsfp.fit = bsfp.train.c3, test_data = test.c3, Y_test = Y.test.c3, nsample = nsample)
 
-bsfp.predict <- function(bsfp.fit, test_data, Y_test, model_params = NULL, sparsity = FALSE, nsample, progress = TRUE, starting_values = NULL) {
+bsfp.predict <- function(bsfp.fit, test_data, Y_test, model_params = NULL, nsample, progress = TRUE, starting_values = NULL) {
 
   # ---------------------------------------------------------------------------
   # Extracting the dimensions
@@ -2192,6 +2193,7 @@ summarize_factors <- function(data, Y = NULL, iters_burnin,
 #' @param V.iter Posterior draw for joint scores, V, at a given iteration
 #' @param W.iter Posterior draw for individual loadings, W, at a given iteration
 #' @param Vs.iter Posterior draw for individual scores, Vs, at a given iteration
+#' @param model_params Model parameters used in BSFP fit. Usually given in BSFP output.
 #' @param ranks Estimated joint and individual ranks from BSFP
 #' @param beta.iter Posterior draw for regression coefficients at a given iteration
 #' @param tau2.iter Posterior draw for estimated error variance in Y at a given iteration
@@ -2250,8 +2252,6 @@ summarize_factors <- function(data, Y = NULL, iters_burnin,
 #' })
 
 log_joint_density <- function(data, Y = NULL, U.iter, V.iter, W.iter, Vs.iter, model_params, ranks, beta.iter = NULL, tau2.iter = NULL, Xm.iter = NULL, Ym.iter = NULL) {
-
-  library(invgamma)
 
   # How many sources are there?
   q <- nrow(data)
@@ -2370,7 +2370,7 @@ log_joint_density <- function(data, Y = NULL, U.iter, V.iter, W.iter, Vs.iter, m
         }))
 
         # The contribution of tau2 to the joint density
-        like <- like + log(dinvgamma(tau2.iter[[1,1]], shape = shape, scale = 1/rate))
+        like <- like + log(invgamma::dinvgamma(tau2.iter[[1,1]], shape = shape, scale = 1/rate))
       }
 
       if (response_type == "binary") {
@@ -2449,8 +2449,8 @@ log_joint_density <- function(data, Y = NULL, U.iter, V.iter, W.iter, Vs.iter, m
 #' \item{Vs}{The individual scores used to construct the individual structure. This is not identifiable
 #' by BSFP. Access the scores for source \eqn{s} by \code{Vs[[1,s]]}.}
 #' \item{W}{The individual loadings used to construct the individual structure. This is not identifiable
-#' by BSFP. Access the loadings for source \eqn{s} by \code{W[[s,s]]}. \code{W[[s,ss]] for \eqn{ss \neq s}
-#' is equal to 0.}}
+#' by BSFP. Access the loadings for source \eqn{s} by \code{W[[s,s]]}. \code{W[[s,ss]]} for \eqn{ss \neq s}
+#' is equal to 0.}
 #' \item{beta}{The intercept and regression coefficients for the joint and individual factors.}
 #' \item{EY}{The conditional expectation of the response, i.e. \eqn{\mathbb{E}(y|X)}.}
 #' \item{tau2}{The true variance of a continuous response vector. If \code{response="binary"}, this

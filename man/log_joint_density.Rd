@@ -35,6 +35,8 @@ May be NULL if no outcome is given. May contain NAs if there are missing outcome
 
 \item{Vs.iter}{Posterior draw for individual scores, Vs, at a given iteration}
 
+\item{model_params}{Model parameters used in BSFP fit. Usually given in BSFP output.}
+
 \item{ranks}{Estimated joint and individual ranks from BSFP}
 
 \item{beta.iter}{Posterior draw for regression coefficients at a given iteration}

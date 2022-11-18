@@ -84,8 +84,8 @@ BSFP. Access the loadings for source \eqn{s} by \code{U[[s,1]]}.}
 \item{Vs}{The individual scores used to construct the individual structure. This is not identifiable
 by BSFP. Access the scores for source \eqn{s} by \code{Vs[[1,s]]}.}
 \item{W}{The individual loadings used to construct the individual structure. This is not identifiable
-by BSFP. Access the loadings for source \eqn{s} by \code{W[[s,s]]}. \code{W[[s,ss]] for \eqn{ss \neq s}
-is equal to 0.}}
+by BSFP. Access the loadings for source \eqn{s} by \code{W[[s,s]]}. \code{W[[s,ss]]} for \eqn{ss \neq s}
+is equal to 0.}
 \item{beta}{The intercept and regression coefficients for the joint and individual factors.}
 \item{EY}{The conditional expectation of the response, i.e. \eqn{\mathbb{E}(y|X)}.}
 \item{tau2}{The true variance of a continuous response vector. If \code{response="binary"}, this
