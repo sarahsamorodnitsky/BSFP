@@ -1129,6 +1129,18 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
 #' p.vec <- c(75, 100)
 #' q <- 2
 #'
+#' # Setting up the model parameters
+#' true_params <- list(error_vars = c(1,1), # Length must be q
+#' joint_var = 1,
+#' indiv_vars = c(1,1), # Length must be q
+#' beta_vars = c(1, 1, rep(1, q)), # Length must be q+2 (intercept, joint, individual)
+#' response_vars = c(shape = 1, rate = 1))
+#'
+#' # Choose ranks
+#' r <- 3
+#' r.vec <- c(3, 3)
+#' ranks <- c(r, r.vec)
+#'
 #' # Generate data
 #' data.c3 <- bsfp_data(p.vec, n, ranks, true_params, s2nX = NULL, s2nY = NULL, response = "continuous", sparsity = FALSE)
 #'
