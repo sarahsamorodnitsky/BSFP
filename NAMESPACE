@@ -1,2 +1,4 @@
 exportPattern("^[[:alpha:]]+")
 importFrom(Rdpack,reprompt)
+importFrom("stats", "dbinom", "dnorm", "median", "pnorm", "quantile", "rbeta", "rbinom", "rgamma", "rnorm", "sd", "varimax")
+importFrom("utils", "setTxtProgressBar", "txtProgressBar")
