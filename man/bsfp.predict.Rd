@@ -74,6 +74,11 @@ r <- 3
 r.vec <- c(3, 3)
 ranks <- c(r, r.vec)
 
+# Number of posterior sampling iterations
+nsample <- 1000
+burnin <- nsample/2
+iters_burnin <- (burnin+1):nsample
+
 # Generate data
 data.c3 <- bsfp_data(p.vec, n, ranks, true_params, s2nX = NULL, s2nY = NULL, response = "continuous", sparsity = FALSE)
 
