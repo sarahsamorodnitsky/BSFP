@@ -27,20 +27,20 @@ pivot used in the alignment.
 }
 \description{
 Given results from BSFP, apply Varimax rotation and greedy alignment
-using the MatchAlign algorithm to adjust for rotational, permutation,
+using the MatchAlign algorithm \insertCite{poworoznek2021efficiently}{BSFP} to adjust for rotational, permutation,
 and sign invariance. This function is used within the match_align_bsfp
-function only. Code was
-adapted from the \code{infinitefactor} package developed by Evan Poworoznek.
+function only. Code was adapted from the \code{\link[infinitefactor]{jointRot}} function
+in the \code{infinitefactor} package.
 }
 \details{
 This is an interval function that runs the MatchAlign algorithm,
-originally developed by Evan Poworoznek, on structures estimated by the BSFP model.
+on structures estimated by the BSFP model.
 Allows users to specify their own pivot or use a pivot several indices away from the default pivot.
-As is done in Poworoznek et al. (2021), this function uses the median condition number to identify a pivot.
+As is done in \insertCite{poworoznek2021efficiently;textual}{BSFP}, this function uses the median condition number to identify a pivot.
 }
 \references{
 {
  \insertRef{poworoznek2021efficiently}{BSFP}
- \insertRef{poworoznek2020package}{BSFP}
+ \insertRef{poworoznek2020infinite}{BSFP}
 }
 }

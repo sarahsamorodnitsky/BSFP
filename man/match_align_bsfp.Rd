@@ -48,13 +48,13 @@ of the individual factors for each source. This can be used to further examine s
 }
 \description{
 Correcting for rotation, permutation, and sign invariance by applying the
-MatchAlign algorithm (Poworoznek et al. (2021)) to results from BSFP fit.
+MatchAlign algorithm \insertCite{poworoznek2021efficiently}{BSFP} to results from BSFP fit.
 }
 \details{
 The estimated loadings and scores from BSFP are not identifiable due to
 rotation, permutation, and sign invariance. This invariance obstructs using posterior
 summaries to study the estimated factors. To address these issues, we adapt the MatchAlign
-algorithm proposed by Poworoznek et al. (2021) to address these ambiguities. This function
+algorithm \insertCite{poworoznek2021efficiently}{BSFP} to address these ambiguities. This function
 formats the posterior samples for the loadings and scores in the appropriate format to
 run the MatchAlign alignment and returns the final aligned factors. The factors within each structure
 are ordered from most-to-least variance explained.
@@ -98,6 +98,5 @@ alignment.c1 <- match_align_bsfp(BSFP.fit = bsfp.c1, y = data.c1$Y,
 \references{
 {
  \insertRef{poworoznek2021efficiently}{BSFP}
- \insertRef{poworoznek2020package}{BSFP}
 }
 }

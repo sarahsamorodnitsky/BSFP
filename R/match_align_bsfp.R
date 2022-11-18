@@ -1,7 +1,7 @@
 #' Aligning Posterior Samples from BSFP
 #'
 #' Correcting for rotation, permutation, and sign invariance by applying the
-#' MatchAlign algorithm (Poworoznek et al. (2021)) to results from BSFP fit.
+#' MatchAlign algorithm \insertCite{poworoznek2021efficiently}{BSFP} to results from BSFP fit.
 #'
 #' @param BSFP.fit (list): a list of results from the BPMF model fit
 #' @param y (matrix of lists): outcome vector if available
@@ -16,7 +16,7 @@
 #' @details The estimated loadings and scores from BSFP are not identifiable due to
 #' rotation, permutation, and sign invariance. This invariance obstructs using posterior
 #' summaries to study the estimated factors. To address these issues, we adapt the MatchAlign
-#' algorithm proposed by Poworoznek et al. (2021) to address these ambiguities. This function
+#' algorithm \insertCite{poworoznek2021efficiently}{BSFP} to address these ambiguities. This function
 #' formats the posterior samples for the loadings and scores in the appropriate format to
 #' run the MatchAlign alignment and returns the final aligned factors. The factors within each structure
 #' are ordered from most-to-least variance explained.
@@ -26,7 +26,6 @@
 #'
 #' @references {
 #'  \insertRef{poworoznek2021efficiently}{BSFP}
-#'  \insertRef{poworoznek2020package}{BSFP}
 #' }
 #' @importFrom Rdpack reprompt
 #'
@@ -432,10 +431,10 @@ match_align_bsfp <- function(BSFP.fit, y = NULL, model_params, p.vec, iters_burn
 #' Adaptation of MatchAlign Algorithm for BSFP Results
 #'
 #' Given results from BSFP, apply Varimax rotation and greedy alignment
-#' using the MatchAlign algorithm to adjust for rotational, permutation,
+#' using the MatchAlign algorithm \insertCite{poworoznek2021efficiently}{BSFP} to adjust for rotational, permutation,
 #' and sign invariance. This function is used within the match_align_bsfp
-#' function only. Code was
-#' adapted from the \code{infinitefactor} package developed by Evan Poworoznek.
+#' function only. Code was adapted from the \code{\link[infinitefactor]{jointRot}} function
+#' in the \code{infinitefactor} package.
 #'
 #' @param lambda (list): list of loadings matrices. For BSFP, this will be combined
 #'                loadings and betas.
@@ -446,13 +445,13 @@ match_align_bsfp <- function(BSFP.fit, y = NULL, model_params, p.vec, iters_burn
 #'                     0 uses the default pivot. Could be positive or negative.
 #'
 #' @details This is an interval function that runs the MatchAlign algorithm,
-#' originally developed by Evan Poworoznek, on structures estimated by the BSFP model.
+#' on structures estimated by the BSFP model.
 #' Allows users to specify their own pivot or use a pivot several indices away from the default pivot.
-#' As is done in Poworoznek et al. (2021), this function uses the median condition number to identify a pivot.
+#' As is done in \insertCite{poworoznek2021efficiently;textual}{BSFP}, this function uses the median condition number to identify a pivot.
 #'
 #' @references {
 #'  \insertRef{poworoznek2021efficiently}{BSFP}
-#'  \insertRef{poworoznek2020package}{BSFP}
+#'  \insertRef{poworoznek2020infinite}{BSFP}
 #'}
 #' @importFrom Rdpack reprompt
 #'
