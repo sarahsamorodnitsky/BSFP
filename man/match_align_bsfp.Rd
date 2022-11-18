@@ -2,7 +2,7 @@
 % Please edit documentation in R/match_align_bsfp.R
 \name{match_align_bsfp}
 \alias{match_align_bsfp}
-\title{match_align_bsfp}
+\title{Aligning Posterior Samples from BSFP}
 \usage{
 match_align_bsfp(
   BSFP.fit,
@@ -96,5 +96,8 @@ alignment.c1 <- match_align_bsfp(BSFP.fit = bsfp.c1, y = data.c1$Y,
                                  p.vec = p.vec, iters_burnin = iters_burnin)
 }
 \references{
-\insertAllCited{}
+{
+ \insertRef{poworoznek2021efficiently}{BSFP}
+ \insertRef{poworoznek2020package}{BSFP}
+}
 }
