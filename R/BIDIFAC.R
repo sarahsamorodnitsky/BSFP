@@ -1,3 +1,8 @@
+# UNIFAC/BIDIFAC Functions
+
+#' BIDIFAC
+#'
+#' @author Jun Young Park (2020)
 BIDIFAC=function(data,rmt=T, sigma=NULL,
                  start=NULL, out=FALSE,
                  eps=1e-3, max.iter=1000, pbar=TRUE, seed=NULL, scale_back = TRUE, ...){
@@ -118,6 +123,9 @@ BIDIFAC=function(data,rmt=T, sigma=NULL,
               sigma.mat=sigma.mat, n.vec=nvec,m.vec=mvec))
 }
 
+#' impute.BIDIFAC
+#'
+#' @author Jun Young Park (2020)
 impute.BIDIFAC=function(data,
                         rmt=T, sigma=NULL,
                         pbar=TRUE,
@@ -212,6 +220,9 @@ impute.BIDIFAC=function(data,
   return(fit)
 }
 
+#' data.rearrange
+#'
+#' @author Jun Young Park (2020)
 data.rearrange=function(data,rmt=F,sigma=NULL){
   out=NULL
   p=nrow(data)
@@ -240,20 +251,35 @@ data.rearrange=function(data,rmt=F,sigma=NULL){
   return(list(out=out, nrows=m.vec, ncols=n.vec, sigma.mat=sigma))
 }
 
+#' frob
+#'
+#' @author Jun Young Park (2020)
 frob <- function(X){ sum(X^2,na.rm=T) }
 
+#' diag2
+#'
+#' @author Jun Young Park (2020)
 diag2 <- function(x) {
   if (length(x)==1) return(as.matrix(x))
   else if (length(x)>1) return(diag(x))
 }
 
+#' sample2
+#'
+#' @author Jun Young Park (2020)
 sample2 <- function(x) {
   if (length(x)==1) return(x)
   else if (length(x)>1) return(sample(x))
 }
 
+#' sigma.rmt
+#'
+#' @author Jun Young Park (2020)
 sigma.rmt=function(X){ estim_sigma(X,method="MAD") }
 
+#' softSVD
+#'
+#' @author Jun Young Park (2020)
 softSVD=function(X, lambda){
   svdX=svd(X)
   nuc=pmax(svdX$d-lambda,0)
@@ -261,6 +287,9 @@ softSVD=function(X, lambda){
   return(list(out=out, nuc=sum(nuc)))
 }
 
+#' fill.matrix
+#'
+#' @author Jun Young Park (2020)
 fill.matrix=function(X){
   na.ind.original=na.ind=which(is.na(X),arr.ind = T)
   bool=T
@@ -280,6 +309,9 @@ fill.matrix=function(X){
   return(list(X.fill=X, na.ind=na.ind.original))
 }
 
+#' estim_sigma
+#'
+#' @author Jun Young Park (2020)
 estim_sigma <- function (X, k = NA, method = c("LN", "MAD"), center = "TRUE") {
   method <- match.arg(method, c("LN", "MAD", "ln", "mad", "Ln",
                                 "Mad"), several.ok = T)[1]
