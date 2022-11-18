@@ -11,7 +11,7 @@ library(devtools)
 devtools::install_github("sarahsamorodnitsky/BSFP")
 ```
 
-This package depends on the following R packages: `MASS`, `Matrix, `truncnorm`, and `infinitefactor`. 
+This package depends on the following R packages: `MASS`, `Matrix`, `truncnorm`, `infinitefactor`, `svMisc`, and `invgamma`. 
 
 # Examples
 
