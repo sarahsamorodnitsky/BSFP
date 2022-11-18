@@ -42,6 +42,6 @@ As is done in \insertCite{poworoznek2021efficiently;textual}{BSFP}, this functio
 {
  \insertRef{poworoznek2021efficiently}{BSFP}
 
- \insertRef{poworoznek2020infinite}{BSFP}
+ \insertRef{infinitefactor}{BSFP}
 }
 }

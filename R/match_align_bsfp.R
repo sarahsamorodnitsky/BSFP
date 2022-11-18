@@ -452,7 +452,7 @@ match_align_bsfp <- function(BSFP.fit, y = NULL, model_params, p.vec, iters_burn
 #' @references {
 #'  \insertRef{poworoznek2021efficiently}{BSFP}
 #'
-#'  \insertRef{poworoznek2020infinite}{BSFP}
+#'  \insertRef{infinitefactor}{BSFP}
 #'}
 #' @importFrom Rdpack reprompt
 #'
