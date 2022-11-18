@@ -2,7 +2,7 @@
 
 #' Bayesian Simultaneous Factorization and Prediction (BSFP)
 #'
-#' Given multiple sources of data and a continuous or binary outcome measured on n samples,
+#' Given multiple sources of data and a continuous or binary outcome measured on \eqn{n} samples,
 #' BSFP can decompose variation across the sources into joint and individual structures.
 #' BSFP simultaneously uses the estimated factors driving these structures to predict an outcome.
 #' BSFP estimates the full posterior distributions of the factors and the predictive model.
@@ -59,8 +59,8 @@
 #' \item{EY.draw}{List of posterior samples for the E(Y|X), i.e. \eqn{\beta_0 + \mathbf{V}\boldsymbol{\beta}_{joint} + \sum_{s=1}^q \mathbf{V}_s \boldsymbol{\beta}_s} for each Gibbs sampling iteration.}
 #' \item{V.draw}{List of posterior samples for joint scores, \eqn{\mathbf{V}}}
 #' \item{U.draw}{List of posterior samples for joint loadings for each source, \eqn{\mathbf{U}_s} for \eqn{s=1,\dots,q}}
-#' \item{W.draw}{List of posterior samples for individual loadings for each source,  \eqn{\mathbf{W}_s} for \sqn{s=1,\dots,q}}
-#' \item{Vs.draw}{List of posterior samples for individual scores for each source, \eqn{\mathbf{V}_s} for \sqn{s=1,\dots,q}}
+#' \item{W.draw}{List of posterior samples for individual loadings for each source,  \eqn{\mathbf{W}_s} for \eqn{s=1,\dots,q}}
+#' \item{Vs.draw}{List of posterior samples for individual scores for each source, \eqn{\mathbf{V}_s} for \eqn{s=1,\dots,q}}
 #' \item{Xm.draw}{List of predicted values for missing observations in each source \eqn{\mathbf{X}_s} for \eqn{s=1,\dots,q}}
 #' \item{Ym.draw}{List of predicted values for missing outcomes}
 #' \item{Z.draw}{List of draws for latent continuous variable to facilitate Gibbs sampling if outcome is binary}
@@ -1115,8 +1115,8 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
 #' \item{EY.draw}{List of posterior samples for the E(Y|X), i.e. \eqn{\beta_0 + \mathbf{V}\boldsymbol{\beta}_{joint} + \sum_{s=1}^q \mathbf{V}_s \boldsymbol{\beta}_s} for each Gibbs sampling iteration.}
 #' \item{V.draw}{List of posterior samples for joint scores, \eqn{\mathbf{V}}}
 #' \item{U.train}{List of posterior samples for joint loadings for each source, \eqn{\mathbf{U}_s} for \eqn{s=1,\dots,q} given by the training BSFP fit}
-#' \item{W.train}{List of posterior samples for individual loadings for each source,  \eqn{\mathbf{W}_s} for \sqn{s=1,\dots,q} given by the training BSFP fit}
-#' \item{Vs.draw}{List of posterior samples for individual scores for each source, \eqn{\mathbf{V}_s} for \sqn{s=1,\dots,q}}
+#' \item{W.train}{List of posterior samples for individual loadings for each source,  \eqn{\mathbf{W}_s} for \eqn{s=1,\dots,q} given by the training BSFP fit}
+#' \item{Vs.draw}{List of posterior samples for individual scores for each source, \eqn{\mathbf{V}_s} for \eqn{s=1,\dots,q}}
 #' \item{ranks}{Vector with the estimated joint and individual ranks. \code{ranks[1]} is the estimated joint rank. \code{ranks[2:(q+1)]} correspond to the individual ranks for each source.}
 #' \item{tau2.train}{List of posterior samples for the response variance if the response was continuous given by training BSFP fit}
 #' \item{beta.train}{List of posterior samples for the regression coefficients used in the predictive model given by training BSFP fit}
