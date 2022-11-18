@@ -201,7 +201,7 @@ summary.aligned.c2 <- summarize_factors(data = data.c2$missing_data, Y = data.c2
 
 ```
 
-# Example 3: Predicting on test data set
+# Example 3: Predicting on Test Data
 
 In this example, we consider fitting BSFP on training data and using the training fit to predict on a held-out test dataset. This involves estimating a new set of joint and individual scores and predicting a previously-unseen response vector. 
 
