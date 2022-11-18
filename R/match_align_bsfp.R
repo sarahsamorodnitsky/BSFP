@@ -94,8 +94,7 @@ match_align_bsfp <- function(BSFP.fit, y = NULL, model_params, p.vec, iters_burn
 
   # If no response is given
   if (is.null(y)) {
-    joint.betas.final <- individual.betas.final <- joint_var_betas <- NULL
-    indiv_var_betas <- lapply(1:q, function(s) NULL)
+    joint.betas.final <- individual.betas.final <- NULL
   }
 
   # Create a vector for the indices of each rank
@@ -172,15 +171,10 @@ match_align_bsfp <- function(BSFP.fit, y = NULL, model_params, p.vec, iters_burn
   # Save joint scores
   joint.scores <- lapply(iters_burnin, function(iter) BSFP.fit$V.draw[[iter]][[1,1]])
 
-  # Save the prior variance on the betas for joint factors
-  if (!is.null(y)) {
-    joint_var_betas <- diag(rep(model_params$beta_vars[2], ranks[1]))
-  }
-
   # If we estimated more than 1 factor
   if (joint.rank > 1) {
     # Apply the factor switching method to the joint structure
-    joint.results.rotate <- jointRot_multi(joint.loadings, joint.scores, y = y, var_betas = joint_var_betas, index = index, piv = piv.list[[1]])
+    joint.results.rotate <- jointRot_multi(joint.loadings, joint.scores, piv = piv.list[[1]], index = index)
 
     # Separate the joint loadings from the joint scores
     joint.loadings.final <- lapply(joint.results.rotate$lambda, function(iter) iter[1:p,])
@@ -237,16 +231,11 @@ match_align_bsfp <- function(BSFP.fit, y = NULL, model_params, p.vec, iters_burn
 
   individual.scores <- lapply(1:q, function(s) lapply(iters_burnin, function(iter) BSFP.fit$Vs.draw[[iter]][[1,s]]))
 
-  # Save the prior variance on the betas for the individual factors
-  if (!is.null(y)) {
-    indiv_var_betas <- lapply(1:q, function(s) diag(rep(model_params$beta_vars[s+2], ranks[s+1])))
-  }
-
   # Applying the alignment algorithm
   individual.results.rotate <- lapply(1:q, function(s) {
 
     if (indiv.ranks[s] > 1) {
-      out <- jointRot_multi(individual.loadings[[s]], individual.scores[[s]], y = y, var_betas = indiv_var_betas[[s]], index = index, piv = piv.list[[s+1]])
+      out <- jointRot_multi(individual.loadings[[s]], individual.scores[[s]], piv = piv.list[[s+1]], index = index)
       out
     } else {
       list(lambda = individual.loadings[[s]], eta = individual.scores[[s]])
