@@ -1643,9 +1643,9 @@ bsfp.predict <- function(bsfp.fit, test_data, Y_test, model_params = NULL, nsamp
       if (response_type == "binary") {
         Z.draw[[iter+1]][[1,1]] <- matrix(sapply(1:n, function(i) {
           if (Y_complete[i,] == 1) {
-            rtruncnorm(1, a = 0, mean = (VStar.iter %*% beta.iter)[i,], sd = 1)
+            truncnorm::rtruncnorm(1, a = 0, mean = (VStar.iter %*% beta.iter)[i,], sd = 1)
           } else {
-            rtruncnorm(1, b = 0, mean = (VStar.iter %*% beta.iter)[i,], sd = 1)
+            truncnorm::rtruncnorm(1, b = 0, mean = (VStar.iter %*% beta.iter)[i,], sd = 1)
           }
         }), ncol = 1)
       }
@@ -2232,6 +2232,7 @@ summarize_factors <- function(data, Y = NULL, iters_burnin,
 #' nsample <- 1000
 #' burnin <- nsample/2
 #' iters_burnin <- (burnin+1):nsample
+#'
 #' # Generate data
 #' data.c1 <- bsfp_data(p.vec, n, ranks, true_params, s2nX = NULL, s2nY = NULL, response = "continuous", sparsity = FALSE)
 #'
@@ -2467,6 +2468,11 @@ log_joint_density <- function(data, Y = NULL, U.iter, V.iter, W.iter, Vs.iter, m
 #' n <- 50
 #' p.vec <- c(75, 100)
 #' q <- 2
+#'
+#' # Choose ranks
+#' r <- 3
+#' r.vec <- c(3, 3)
+#' ranks <- c(r, r.vec)
 #'
 #' # Setting up the model parameters
 #' true_params <- list(error_vars = c(1,1),

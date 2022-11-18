@@ -113,6 +113,11 @@ n <- 50
 p.vec <- c(75, 100)
 q <- 2
 
+# Choose ranks
+r <- 3
+r.vec <- c(3, 3)
+ranks <- c(r, r.vec)
+
 # Setting up the model parameters
 true_params <- list(error_vars = c(1,1),
                   joint_var = 1,

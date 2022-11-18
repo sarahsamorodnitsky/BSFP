@@ -83,6 +83,7 @@ ranks <- c(r, r.vec)
 nsample <- 1000
 burnin <- nsample/2
 iters_burnin <- (burnin+1):nsample
+
 # Generate data
 data.c1 <- bsfp_data(p.vec, n, ranks, true_params, s2nX = NULL, s2nY = NULL, response = "continuous", sparsity = FALSE)
 
