@@ -62,6 +62,14 @@ data.c1$Y
 
 We then run BSFP on the simulated data with the simulated outcome. Note that in general, we do not recommend running BSFP on a local machine. Rather, we recommend using a high-performance computing system as BSFP returns many posterior samples that may require several gigabytes of memory. After running BSFP, we recommend saving the posterior samples and then checking for convergence. 
 
+To access and view and simulated data, we use matrix-list notation:
+
+```{r}
+data.c1$data[[1,1]] # Accessing source 1
+data.c1$data[[2,1]] # Accessing source 2
+data.c1$Y[[1,1]] # Accessing the response vector
+```
+
 The function to run BSFP, `bsfp`, has several arguments. In general, users are only required to specify the data (which may be specified in a matrix of lists or using a simple list) and the number of samples. An outcome is not necessarily required if no prediction is desired. The function will, be default, use random matrix theory-motivated hyperparameters in prior distributions. Users may specify their own hyperparameters using the `model_params` argument if they wish. Ranks will be determined by solving a nuclear-norm penalized objective using the `BIDIFAC` function (credit to Jun Young Park (2020)). Alternatively, users may provide their own set of ranks using the `ranks` argument. 
 
 ```{r setting 1 run BSFP}
@@ -125,7 +133,7 @@ summary.aligned.c1 <- summarize_factors(data = data.c1$data, Y = data.c1$Y,
                                         ranks = bsfp.c1$ranks, tau2.draw = bsfp.c1$tau2.draw)
 ```
 
-# Setting 2 - Multiple Imputation
+# Setting 2: Multiple Imputation
 
 In setting 2, we consider inducing entrywise (missing-at-random) missingness among the data sources to illustrate multiple imputation with BSFP. We start by simulating some data from the model using the same parameters defined previously. We set 10\% of samples in each source to be missing using the `prop_missing` argument. 
 
