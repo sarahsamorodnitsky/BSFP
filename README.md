@@ -201,6 +201,51 @@ summary.aligned.c2 <- summarize_factors(data = data.c2$missing_data, Y = data.c2
 
 ```
 
+# Example 3: Predicting on test data set
+
+In this example, we consider fitting BSFP on training data and using the training fit to predict on a held-out test dataset. This involves estimating a new set of joint and individual scores and predicting a previously-unseen response vector. 
+
+We start by generating the data:
+
+```{r}
+# Generate data
+data.c3 <- bsfp_data(p.vec, n, ranks, true_params, s2nX = NULL, s2nY = NULL, response = "continuous", sparsity = FALSE)
+```
+
+We then split the two sources and the response vector into a training and test dataset.
+
+```{r}
+# Split into training and test set
+train.c3 <- data.c3$data
+train.c3[[1,1]] <- train.c3[[1,1]][,1:(n/2)]
+train.c3[[2,1]] <- train.c3[[2,1]][,1:(n/2)]
+
+Y.train.c3 <- data.c3$Y
+Y.train.c3[[1,1]] <- Y.train.c3[[1,1]][1:(n/2),,drop=FALSE]
+
+
+test.c3 <- data.c3$data
+test.c3[[1,1]] <- test.c3[[1,1]][,((n/2)+1):n]
+test.c3[[2,1]] <- test.c3[[2,1]][,((n/2)+1):n]
+
+Y.test.c3 <- data.c3$Y
+Y.test.c3[[1,1]] <- Y.test.c3[[1,1]][((n/2)+1):n,,drop=FALSE]
+```
+
+We fit the BSFP model on the training data.
+
+```{r}
+# Run BSFP for 1000 iterations
+bsfp.train.c3 <- bsfp(data = train.c3, Y = Y.train.c3, nsample = nsample)
+```
+
+And predict on the held-out test dataset.
+
+```{r}
+# Run BSFP.predict for 1000 iterations on held-out test data
+bsfp.test.c3 <- bsfp.predict(bsfp.fit = bsfp.train.c3, test_data = test.c3, Y_test = Y.test.c3,
+                             nsample = nsample)
+```
 
 
 
