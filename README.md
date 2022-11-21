@@ -104,7 +104,7 @@ plot(sapply(1:nsample, function(iter) {
 }))
 ```
 
-As mentioned above, some model parameters are not identifiable immediately from model fitting due to rotational, permutation, and sign ambiguity. To address this, we modify the MatchAlign algorithm [[2]](21) to address non-identifiability among the posterior samples. Our code is modified from the R package `infinitefactor` provided by Evan Poworoznek [[3]](#3).
+As mentioned above, some model parameters are not identifiable immediately from model fitting due to rotational, permutation, and sign ambiguity. To address this, we modify the MatchAlign algorithm [[2]](#2) to address non-identifiability among the posterior samples. Our code is modified from the R package `infinitefactor` provided by Evan Poworoznek [[3]](#3).
 
 ```{r setting 1 alignment}
 # Run the alignment algorithm
