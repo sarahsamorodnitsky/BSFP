@@ -55,14 +55,14 @@ First we start by generating our 2 sources of data with a continuous response ou
 # Generate data
 data.c1 <- bsfp_data(p.vec, n, ranks, true_params, s2nX = NULL, s2nY = NULL, response = "continuous", sparsity = FALSE)
 
-# How is the data stored?
+# The simulated observed data is stored in objects data and Y
 data.c1$data
 data.c1$Y
 ```
 
 We then run BSFP on the simulated data with the simulated outcome. Note that in general, we do not recommend running BSFP on a local machine. Rather, we recommend using a high-performance computing system as BSFP returns many posterior samples that may require several gigabytes of memory. After running BSFP, we recommend saving the posterior samples and then checking for convergence. 
 
-The function to run BSFP, `bsfp`, has several arguments. In general, users are only required to specify the data (which may be specified in a matrix of lists or using a simple list) and the number of samples. An outcome is not necessarily required if no prediction is desired. The function will, be default, use random matrix theory-motivated hyperparameters in prior distributions. Users may specify their own hyperparameters using the `model_params` argument if they wish. Ranks will be determined by solving a nuclear-norm penalized objective using the `BIDIFAC` function (credit to Jun Young Park (2020)). Alternatively, users may provide their own set of ranks using the `ranks` argument. 
+The function to run BSFP, `bsfp`, has several arguments. In general, users are only required to specify the data (which may be specified in a matrix of lists or using a simple list) and the number of samples. An outcome is not necessarily required if no prediction is desired. The function will, be default, use random matrix theory-motivated hyperparameters in prior distributions. Users may specify their own hyperparameters using the `model_params` argument if they wish. Ranks will be determined by solving a nuclear-norm penalized objective using the `BIDIFAC` function, written by Jun Young Park (2020) [[1]](#1). Alternatively, users may provide their own set of ranks using the `ranks` argument. 
 
 ```{r setting 1 run BSFP}
 bsfp.c1 <- bsfp(data = data.c1$data, Y = data.c1$Y, nsample = nsample)
@@ -104,7 +104,7 @@ plot(sapply(1:nsample, function(iter) {
 }))
 ```
 
-As mentioned above, some model parameters are not identifiable immediately from model fitting due to rotational, permutation, and sign ambiguity. To address this, we modify the MatchAlign algorithm provided by Poworoznek et al. (2021) to address non-identifiability among the posterior samples. Our code is modified from the R package provided by Evan Poworoznek (2021).
+As mentioned above, some model parameters are not identifiable immediately from model fitting due to rotational, permutation, and sign ambiguity. To address this, we modify the MatchAlign algorithm [[2]](21) to address non-identifiability among the posterior samples. Our code is modified from the R package `infinitefactor` provided by Evan Poworoznek [[3]](#3).
 
 ```{r setting 1 alignment}
 # Run the alignment algorithm
@@ -248,7 +248,20 @@ bsfp.test.c3 <- bsfp.predict(bsfp.fit = bsfp.train.c3, test_data = test.c3, Y_te
 ```
 
 
+# References
+<a id="1">[1]</a> 
+Park, Jun Young, and Eric F. Lock. (2020). 
+Integrative factorization of bidimensionally linked matrices. 
+Biometrics 76.1 (2020): 61-74.
 
+<a id="2">[2]</a> 
+Poworoznek, Evan, Federico Ferrari, and David Dunson. (2021). 
+Efficiently resolving rotational ambiguity in Bayesian matrix sampling with matching.
+arXiv preprint arXiv:2107.13783.
+
+<a id="3">[3]</a> 
+Poworoznek, Evan. (2020). 
+Package ‘infinitefactor’. 
 
 
 
