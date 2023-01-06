@@ -44,6 +44,10 @@
 #' @param progress Boolean indicating if a progress bar be displayed to visualize the progress of the sampler
 #' @param starting_values List of initial values for Gibbs sampler. If \code{NULL} and \code{nninit=TRUE},
 #' fixes at posterior mode. If \code{NULL} and \code{nninit=FALSE}, simulates from prior distributions.
+#' @param save_structures Boolean indicating whether the estimated structures should be saved.
+#' Default is TRUE If TRUE, the estimated structures are saved. If FALSE, only the imputed values are saved
+#' if missing values are present. This may save on memory requirements, especially if predicting held-out
+#' values in cross validation.
 #'
 #' @details BSFP assumes the features (rows) of each source are centered. It does not require features
 #' to be scaled to overall standard deviation 1. If initializing using the nuclear-norm penalized objective,
@@ -101,7 +105,7 @@
 #' # Run BSFP for 1000 iterations
 #' bsfp.c1 <- bsfp(data = data.c1$data, Y = data.c1$Y, nsample = nsample)
 
-bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scores = NULL, nsample, burnin = NULL, progress = TRUE, starting_values = NULL) {
+bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scores = NULL, nsample, burnin = NULL, progress = TRUE, starting_values = NULL, save_structures = TRUE) {
 
   # ---------------------------------------------------------------------------
   # Determining type of input data
@@ -520,7 +524,13 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
   if (missingness_in_data) {
     Xm0 <- matrix(list(), ncol = 1, nrow = q)
     for (s in 1:q) {
-      Xm0[[s,1]] <- rank_init$X[[s,1]][missing_obs[[s]]]
+      if (nninit) {
+        Xm0[[s,1]] <- rank_init$X[[s,1]][missing_obs[[s]]]
+      }
+
+      if (!nninit) {
+        Xm0[[s,1]] <- matrix(0, nrow = length(missing_obs[[s]]), ncol = 1)
+      }
     }
   }
 
@@ -609,44 +619,48 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
     # Storing the current values of the parameters
     # ---------------------------------------------------------------------------
 
-    V.iter <- V.draw[[iter]]
-    U.iter <- U.draw[[iter]]
-    Vs.iter <- Vs.draw[[iter]]
-    W.iter <- W.draw[[iter]]
+    if (save_structures | iter == 1) {
+      V.iter <- V.draw[[iter]]
+      U.iter <- U.draw[[iter]]
+      Vs.iter <- Vs.draw[[iter]]
+      W.iter <- W.draw[[iter]]
+    }
 
     if (response_given) {
-      # The current values of the betas
-      beta.iter <- beta.draw[[iter]][[1,1]]
+      if (save_structures | iter == 1) {
+        # The current values of the betas
+        beta.iter <- beta.draw[[iter]][[1,1]]
 
-      # Creating a matrix of the joint and individual effects
-      beta_indiv.iter <- matrix(list(), nrow = q, ncol = 1)
+        # Creating a matrix of the joint and individual effects
+        beta_indiv.iter <- matrix(list(), nrow = q, ncol = 1)
 
-      # Breaking beta down into the intercept,
-      beta_intercept.iter <- beta.iter[1,, drop = FALSE]
+        # Breaking beta down into the intercept,
+        beta_intercept.iter <- beta.iter[1,, drop = FALSE]
 
-      # Joint effect
-      if (r != 0) beta_joint.iter <- beta.iter[2:(r+1),, drop = FALSE] else beta_joint.iter <- matrix(0)
+        # Joint effect
+        if (r != 0) beta_joint.iter <- beta.iter[2:(r+1),, drop = FALSE] else beta_joint.iter <- matrix(0)
 
-      # Individual effects
-      if (sum(r.vec) > 0) beta_indiv.iter.temp <- beta.iter[(r+2):n_beta,, drop = FALSE]
+        # Individual effects
+        if (sum(r.vec) > 0) beta_indiv.iter.temp <- beta.iter[(r+2):n_beta,, drop = FALSE]
 
-      for (s in 1:q) {
-        # If there is no individual effect
-        if (r.vec[s] == 0) beta_indiv.iter[[s, 1]] <- matrix(0)
+        for (s in 1:q) {
+          # If there is no individual effect
+          if (r.vec[s] == 0) beta_indiv.iter[[s, 1]] <- matrix(0)
 
-        # If there is an individual effect
-        if (r.vec[s] != 0) {
-          if (s == 1) beta_indiv.iter[[s, 1]] <- beta_indiv.iter.temp[1:r.vec[s],, drop = FALSE]
-          if (s != 1) beta_indiv.iter[[s, 1]] <- beta_indiv.iter.temp[(r.vec[s-1]+1):(r.vec[s-1] + r.vec[s]),, drop = FALSE]
+          # If there is an individual effect
+          if (r.vec[s] != 0) {
+            if (s == 1) beta_indiv.iter[[s, 1]] <- beta_indiv.iter.temp[1:r.vec[s],, drop = FALSE]
+            if (s != 1) beta_indiv.iter[[s, 1]] <- beta_indiv.iter.temp[(r.vec[s-1]+1):(r.vec[s-1] + r.vec[s]),, drop = FALSE]
+          }
         }
-      }
 
-      if (response_type == "binary") {
-        Z.iter <- Z.draw[[iter]][[1,1]]
-      }
+        if (response_type == "binary") {
+          Z.iter <- Z.draw[[iter]][[1,1]]
+        }
 
-      if (response_type == "continuous") {
-        tau2.iter <- tau2.draw[[iter]][[1,1]]
+        if (response_type == "continuous") {
+          tau2.iter <- tau2.draw[[iter]]
+        }
       }
 
       if (missingness_in_response) {
@@ -717,7 +731,8 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
           X.iter <- do.call(rbind, X_complete) - data.rearrange(W.iter)$out %*% do.call(rbind, lapply(Vs.iter, t))
           Bv <- solve(tU_Sigma_U + (1/sigma2_joint) * diag(r))
 
-          V.draw[[iter+1]][[1,1]] <- t(matrix(sapply(1:n, function(i) {
+          # V.draw[[iter+1]][[1,1]]
+          V.iter[[1,1]] <- t(matrix(sapply(1:n, function(i) {
             bv <-  tU_Sigma %*% X.iter[,i]
 
             Vi <- MASS::mvrnorm(1, mu = Bv %*% bv, Sigma = Bv)
@@ -747,7 +762,8 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
                             t(Y_complete - c(beta_intercept.iter) - do.call(cbind, Vs.iter) %*% do.call(rbind, beta_indiv.iter)))
           }
 
-          V.draw[[iter+1]][[1,1]] <- t(matrix(sapply(1:n, function(i) {
+          # V.draw[[iter+1]][[1,1]]
+          V.iter[[1,1]] <- t(matrix(sapply(1:n, function(i) {
             bv <- tU_Sigma %*% X.iter[,i]
 
             Vi <- MASS::mvrnorm(1, mu = Bv %*% bv, Sigma = Bv)
@@ -758,11 +774,13 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
       }
 
       if (r == 0) {
-        V.draw[[iter+1]][[1,1]] <- matrix(0, nrow = n, ncol = 1)
+        # V.draw[[iter+1]][[1,1]] <- matrix(0, nrow = n, ncol = 1)
+        V.iter[[1,1]] <- matrix(0, nrow = n, ncol = 1)
       }
 
       # Updating the value of V
-      V.iter <- V.draw[[iter+1]]
+      # V.iter <- V.draw[[iter+1]]
+      if (save_structures) V.draw[[iter+1]][[1,1]] <- V.iter[[1,1]]
 
       # -------------------------------------------------------------------------
       # Posterior sample for Us
@@ -772,7 +790,8 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
         for (s in 1:q) {
           Xs.iter <- X_complete[[s,1]] - W.iter[[s,s]] %*% t(Vs.iter[[1,s]])
           Bu <- solve((1/error_vars[s]) * t(V.iter[[1,1]]) %*% V.iter[[1,1]] + (1/sigma2_joint) * diag(r))
-          U.draw[[iter+1]][[s,1]] <- t(matrix(sapply(1:p.vec[s], function(j) {
+          # U.draw[[iter+1]][[s,1]]
+          U.iter[[s,1]] <- t(matrix(sapply(1:p.vec[s], function(j) {
             bu <- (1/error_vars[s]) * t(V.iter[[1,1]]) %*% Xs.iter[j, ]
 
             U1j <- MASS::mvrnorm(1, mu = Bu %*% bu, Sigma = Bu)
@@ -783,11 +802,13 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
 
       if (r == 0) {
         for (s in 1:q) {
-          U.draw[[iter+1]][[s,1]] <- matrix(0, nrow = p.vec[s], ncol = 1)
+          # U.draw[[iter+1]][[s,1]] <- matrix(0, nrow = p.vec[s], ncol = 1)
+          U.iter[[s,1]] <- matrix(0, nrow = p.vec[s], ncol = 1)
         }
       }
 
-      U.iter <- U.draw[[iter+1]]
+      # U.iter <- U.draw[[iter+1]]
+      if (save_structures) U.draw[[iter+1]] <- U.iter
 
       # -------------------------------------------------------------------------
       # Posterior sample for Vs, s=1,...,q
@@ -799,7 +820,8 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
             Xs.iter <- X_complete[[s,1]] - U.iter[[s,1]] %*% t(V.iter[[1,1]])
             Bvs <- solve((1/error_vars[s]) * t(W.iter[[s,s]]) %*% W.iter[[s,s]] + (1/indiv_vars[s]) * diag(r.vec[s]))
 
-            Vs.draw[[iter+1]][[1,s]] <- t(matrix(sapply(1:n, function(i) {
+            # Vs.draw[[iter+1]][[1,s]]
+            Vs.iter[[1,s]] <- t(matrix(sapply(1:n, function(i) {
               bvs <- (1/error_vars[s]) * t(W.iter[[s,s]]) %*% Xs.iter[, i]
 
               Vsi <- MASS::mvrnorm(1, mu = Bvs %*% bvs, Sigma = Bvs)
@@ -808,7 +830,8 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
           }
 
           if (r.vec[s] == 0) {
-            Vs.draw[[iter+1]][[1,s]] <- matrix(0, nrow = n, ncol = 1)
+            # Vs.draw[[iter+1]][[1,s]] <- matrix(0, nrow = n, ncol = 1)
+            Vs.iter[[1,s]] <- matrix(0, nrow = n, ncol = 1)
           }
         }
       }
@@ -838,7 +861,8 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
                                    do.call(cbind, Vs.iter[1, !(1:q %in% s)]) %*% do.call(rbind, beta_indiv.iter[!(1:q %in% s), 1])))
             }
 
-            Vs.draw[[iter+1]][[1,s]] <- t(matrix(sapply(1:n, function(i) {
+            # Vs.draw[[iter+1]][[1,s]]
+            Vs.iter[[1,s]] <- t(matrix(sapply(1:n, function(i) {
               bvs <- tW_Sigma %*% Xs.iter[, i]
 
               Vsi <- MASS::mvrnorm(1, mu = Bvs %*% bvs, Sigma = Bvs)
@@ -847,13 +871,15 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
           }
 
           if (r.vec[s] == 0) {
-            Vs.draw[[iter+1]][[1,s]] <- matrix(0, nrow = n, ncol = 1)
+            # Vs.draw[[iter+1]][[1,s]] <- matrix(0, nrow = n, ncol = 1)
+            Vs.iter[[1,s]] <- matrix(0, nrow = n, ncol = 1)
           }
         }
       }
 
       # Update the current value of V
-      Vs.iter <- Vs.draw[[iter+1]]
+      # Vs.iter <- Vs.draw[[iter+1]]
+      if (save_structures) Vs.draw[[iter+1]] <- Vs.iter
 
       # Combine current values of V and V.
       V.iter.star.joint <- V.iter
@@ -871,7 +897,7 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
       VStar.iter <- cbind(1, do.call(cbind, V.iter.star.joint), do.call(cbind, Vs.iter.star))
 
       # Save the current VStar
-      VStar.draw[[iter+1]][[1,1]] <- VStar.iter
+      if (save_structures) VStar.draw[[iter+1]][[1,1]] <- VStar.iter
 
       # -------------------------------------------------------------------------
       # Posterior sample for W
@@ -882,7 +908,8 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
           Xs.iter <- X_complete[[s,1]] - U.iter[[s,1]] %*% t(V.iter[[1,1]])
           Bws <- solve((1/error_vars[s]) * t(Vs.iter[[1,s]]) %*% Vs.iter[[1,s]] + (1/indiv_vars[s]) * diag(r.vec[s]))
 
-          W.draw[[iter+1]][[s,s]] <- t(matrix(sapply(1:p.vec[s], function(j) {
+          # W.draw[[iter+1]][[s,s]]
+          W.iter[[s,s]] <- t(matrix(sapply(1:p.vec[s], function(j) {
             bws <- (1/error_vars[s]) * t(Vs.iter[[1,s]]) %*% Xs.iter[j,]
 
             Wsj <- MASS::mvrnorm(1, mu = Bws %*% bws, Sigma = Bws)
@@ -892,27 +919,32 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
           for (ss in 1:q) {
             if (ss != s) {
               if (r.vec[ss] > 0) {
-                W.draw[[iter+1]][[s,ss]] <- matrix(0, nrow = p.vec[[s]], ncol = r.vec[ss])
+                # W.draw[[iter+1]][[s,ss]]
+                W.iter[[s,ss]] <- matrix(0, nrow = p.vec[[s]], ncol = r.vec[ss])
               }
 
               if (r.vec[ss] == 0) {
-                W.draw[[iter+1]][[s,ss]] <- matrix(0, nrow = p.vec[[s]], ncol = 1)
+                # W.draw[[iter+1]][[s,ss]]
+                W.iter[[s,ss]] <- matrix(0, nrow = p.vec[[s]], ncol = 1)
               }
             }
           }
         }
 
         if (r.vec[s] == 0) {
-          W.draw[[iter+1]][[s,s]] <- matrix(0, nrow = p.vec[s], ncol = 1)
+          # W.draw[[iter+1]][[s,s]]
+          W.iter[[s,s]] <- matrix(0, nrow = p.vec[s], ncol = 1)
 
           for (ss in 1:q) {
             if (ss != s) {
               if (r.vec[ss] > 0) {
-                W.draw[[iter+1]][[s,ss]] <- matrix(0, nrow = p.vec[[s]], ncol = r.vec[ss])
+                # W.draw[[iter+1]][[s,ss]]
+                W.iter[[s,ss]] <- matrix(0, nrow = p.vec[[s]], ncol = r.vec[ss])
               }
 
               if (r.vec[ss] == 0) {
-                W.draw[[iter+1]][[s,ss]] <- matrix(0, nrow = p.vec[[s]], ncol = 1)
+                # W.draw[[iter+1]][[s,ss]]
+                W.iter[[s,ss]] <- matrix(0, nrow = p.vec[[s]], ncol = 1)
               }
             }
           }
@@ -920,7 +952,7 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
       }
 
       # Update the current value of W
-      W.iter <- W.draw[[iter+1]]
+      if (save_structures) W.draw[[iter+1]] <- W.iter
 
     }
 
@@ -941,14 +973,15 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
       }
 
       if (response_type == "continuous") {
-        Bbeta <- solve((1/tau2.iter[[1,1]]) * t(VStar.iter) %*% VStar.iter + SigmaBetaInv)
-        bbeta <- (1/tau2.iter[[1,1]]) * t(VStar.iter) %*% Y_complete
+        Bbeta <- solve((1/tau2.iter[[1,1]][[1,1]]) * t(VStar.iter) %*% VStar.iter + SigmaBetaInv)
+        bbeta <- (1/tau2.iter[[1,1]][[1,1]]) * t(VStar.iter) %*% Y_complete
       }
 
-      beta.draw[[iter+1]][[1,1]] <- matrix(MASS::mvrnorm(1, mu = Bbeta %*% bbeta, Sigma = Bbeta), ncol = 1)
+      # beta.draw[[iter+1]][[1,1]]
+      beta.iter <- matrix(MASS::mvrnorm(1, mu = Bbeta %*% bbeta, Sigma = Bbeta), ncol = 1)
 
       # Update the current value of beta
-      beta.iter <- beta.draw[[iter+1]][[1,1]]
+      if (save_structures) beta.draw[[iter+1]][[1,1]] <- beta.iter
 
       # Creating a matrix of the joint and individual effects
       beta_indiv.iter <- matrix(list(), ncol = 1, nrow = q)
@@ -980,10 +1013,11 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
 
     if (response_given) {
       if (response_type == "continuous") {
-        tau2.draw[[iter+1]][[1,1]] <- matrix(1/rgamma(1, shape = shape + (n/2), rate = rate + 0.5 * sum((Y_complete - VStar.iter %*% beta.iter)^2)))
+        # tau2.draw[[iter+1]][[1,1]]
+        tau2.iter[[1,1]][[1,1]] <- matrix(1/rgamma(1, shape = shape + (n/2), rate = rate + 0.5 * sum((Y_complete - VStar.iter %*% beta.iter)^2)))
 
         # Update the current value of tau2
-        tau2.iter <- tau2.draw[[iter+1]][[1,1]]
+        if (save_structures) tau2.draw[[iter+1]] <- tau2.iter
       }
     }
 
@@ -993,13 +1027,16 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
 
     if (response_given) {
       if (response_type == "binary") {
-        Z.draw[[iter+1]][[1,1]] <- matrix(sapply(1:n, function(i) {
+        # Z.draw[[iter+1]][[1,1]]
+        Z.iter[[1,1]] <- matrix(sapply(1:n, function(i) {
           if (Y_complete[i,] == 1) {
             truncnorm::rtruncnorm(1, a = 0, mean = (VStar.iter %*% beta.iter)[i,], sd = 1)
           } else {
             truncnorm::rtruncnorm(1, b = 0, mean = (VStar.iter %*% beta.iter)[i,], sd = 1)
           }
         }), ncol = 1)
+
+        if (save_structures) Z.draw[[iter+1]] <- Z.iter
       }
     }
 
@@ -1050,27 +1087,29 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
   # Calculating the structure for Y at each Gibbs sampling iteration
   EY.draw <- lapply(1:nsample, function(i) matrix(list(), nrow = 1, ncol = 1))
 
-  if (is.null(scores)) {
-    for (iter in 1:nsample) {
-      for (s in 1:q) {
-        # Calculating the joint structure and scaling by sigma.mat
-        J.draw[[iter]][[s,1]] <- (U.draw[[iter]][[s,1]] %*% t(V.draw[[iter]][[1,1]])) * sigma.mat[s,1]
+  if (save_structures) {
+    if (is.null(scores)) {
+      for (iter in 1:nsample) {
+        for (s in 1:q) {
+          # Calculating the joint structure and scaling by sigma.mat
+          J.draw[[iter]][[s,1]] <- (U.draw[[iter]][[s,1]] %*% t(V.draw[[iter]][[1,1]])) * sigma.mat[s,1]
 
-        # Calculating the individual structure and scaling by sigma.mat
-        A.draw[[iter]][[s,1]] <- (W.draw[[iter]][[s,s]] %*% t(Vs.draw[[iter]][[1,s]])) * sigma.mat[s,1]
+          # Calculating the individual structure and scaling by sigma.mat
+          A.draw[[iter]][[s,1]] <- (W.draw[[iter]][[s,s]] %*% t(Vs.draw[[iter]][[1,s]])) * sigma.mat[s,1]
 
-        # Calculate the overall structure (joint + individual
-        S.draw[[iter]][[s,1]] <- J.draw[[iter]][[s,1]] + A.draw[[iter]][[s,1]]
-      }
-
-      # Calculate the structure for Y
-      if (response_given) {
-        if (response_type == "continuous") {
-          EY.draw[[iter]][[1,1]] <- VStar.draw[[iter]][[1,1]] %*% beta.draw[[iter]][[1,1]]
+          # Calculate the overall structure (joint + individual
+          S.draw[[iter]][[s,1]] <- J.draw[[iter]][[s,1]] + A.draw[[iter]][[s,1]]
         }
 
-        if (response_type == "binary") {
-          EY.draw[[iter]][[1,1]] <- pnorm(VStar.draw[[iter]][[1,1]] %*% beta.draw[[iter]][[1,1]])
+        # Calculate the structure for Y
+        if (response_given) {
+          if (response_type == "continuous") {
+            EY.draw[[iter]][[1,1]] <- VStar.draw[[iter]][[1,1]] %*% beta.draw[[iter]][[1,1]]
+          }
+
+          if (response_type == "binary") {
+            EY.draw[[iter]][[1,1]] <- pnorm(VStar.draw[[iter]][[1,1]] %*% beta.draw[[iter]][[1,1]])
+          }
         }
       }
     }
