@@ -33,6 +33,13 @@
 #' \code{beta_vars} must be of length \eqn{q+1}
 #' to specify the prior variance on the intercept, the prior variance on each joint factor's
 #' contribution to the outcome, and for each individual factor's contribution from each source.
+#' If not specified, must specify prior_beta_data_driven to be TRUE.
+#' @param prior_beta_data_driven Boolean indicating whether the prior variances on the regression
+#' coefficients should scale with the data. If TRUE, the variance of each regression coefficient is
+#' the ratio of the variance of the outcome over the average variance of each joint or individual factor
+#' (depending on the coefficient). The results from initializing with BIDIFAC will be used, or the user-provided
+#' starting_values will be used. If FALSE, a default of 1 is used. For the intercept, a vague prior
+#' variance of 1e6 is used.
 #' @param ranks A list of length \eqn{q+1} for the ranks of the joint and individual structures.
 #' Leave \code{NULL} if \code{nninit=TRUE}.
 #' @param scores Matrix with scores estimated by existing factorization method. Use only
@@ -105,7 +112,7 @@
 #' # Run BSFP for 1000 iterations
 #' bsfp.c1 <- bsfp(data = data.c1$data, Y = data.c1$Y, nsample = nsample)
 
-bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scores = NULL, nsample, burnin = NULL, progress = TRUE, starting_values = NULL, save_structures = TRUE) {
+bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, prior_beta_data_driven = FALSE, ranks = NULL, scores = NULL, nsample, burnin = NULL, progress = TRUE, starting_values = NULL, save_structures = TRUE) {
 
   # ---------------------------------------------------------------------------
   # Determining type of input data
@@ -200,22 +207,20 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
     sigma2_indiv <- indiv_vars <- 1/(lambda_indiv)
 
     # For the regression coefficients, beta
-    lambda2_intercept <- 1e6
-    lambda2_joint <- 1
-    lambda2_indiv1 <- 1
-    lambda2_indiv2 <- 1
-    beta_vars <- c(lambda2_intercept, lambda2_joint, lambda2_indiv1, lambda2_indiv2)
+    if (prior_beta_data_driven & !nninit) stop("If not initializing with BIDIFAC, must specify hyperparameters for betas.")
+
+    if (!prior_beta_data_driven) {
+      lambda2_intercept <- 1e6
+      lambda2_joint <- 1
+      lambda2_indiv1 <- 1
+      lambda2_indiv2 <- 1
+      beta_vars <- c(lambda2_intercept, lambda2_joint, lambda2_indiv1, lambda2_indiv2)
+    }
 
     # For the response vector
     shape <- 0.01
     rate <- 0.01
 
-    # Putting the model parameters together
-    model_params <- list(error_vars = error_vars,
-                         joint_var = sigma2_joint,
-                         indiv_vars = sigma2_indiv,
-                         beta_vars = beta_vars,
-                         response_vars = c(shape = shape, rate = rate))
   }
 
   # If model parameters are given
@@ -235,7 +240,7 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
     }
 
     # If there is a response and model_params is not NULL, there must be beta priors and response variance priors
-    if ((!is.null(Y[[1,1]]) & is.null(model_params$beta_vars))) {
+    if ((!is.null(Y[[1,1]]) & is.null(model_params$beta_vars) & !prior_beta_data_driven)) {
       stop("A response vector is given so please provide hyperparameters for the regression coefficients in the form
            of model_params$beta_vars = c(intercept_prior_var, prior_var_on_joint_factors, prior_var_on_individual_factors_source_1, ..., prior_var_on_individual_factors_source_q")
     }
@@ -306,13 +311,6 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
   r_total <- r + sum(r.vec)
   n_beta <- 1 + r_total
 
-  # If a response is given, set up the variance matrix for the prior of the betas using the ranks
-  if (response_given) {
-    Sigma_beta <- matrix(0, nrow = n_beta, ncol = n_beta)
-    beta_vars <- c(beta_vars[1], rep(beta_vars[-1], c(r, r.vec)))
-    diag(Sigma_beta) <- beta_vars
-  }
-
   # Save the indices for the factors from each source
   rank.inds <- lapply(1:(q+1), function(s) {
 
@@ -361,7 +359,7 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
   }
 
   # ---------------------------------------------------------------------------
-  # Initialize V, U, V, W
+  # Initialize V, U, V, W and prior on the regression coefficients
   # ---------------------------------------------------------------------------
 
   # If initializing with nuclear norm, set initialize values to posterior mode
@@ -500,6 +498,38 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, ranks = NULL, scor
       Vs0 <- starting_values$Vs
     }
 
+  }
+
+  # Establish the option for a prior on the regression coefficients that scales with the data
+  if (nninit & prior_beta_data_driven) {
+
+    # Establishing a vague prior on the intercept
+    lambda2_intercept <- 1e6
+
+    # Establish prior variance on the joint factors
+    lambda2_joint <- var(Y)/mean(apply(V0[[1,1]], 2, var))
+
+    # Establish prior variance on the individual factors
+    lambda2_indiv1 <- var(Y)/mean(apply(Vs0[[1,1]], 2, var))
+    lambda2_indiv2 <- var(Y)/mean(apply(Vs0[[1,2]], 2, var))
+
+    # Combine
+    beta_vars <- c(lambda2_intercept, lambda2_joint, lambda2_indiv1, lambda2_indiv2)
+
+  }
+
+  # Complete the model parameters
+  model_params <- list(error_vars = error_vars,
+                       joint_var = sigma2_joint,
+                       indiv_vars = sigma2_indiv,
+                       beta_vars = beta_vars,
+                       response_vars = c(shape = shape, rate = rate))
+
+  # If a response is given, set up the variance matrix for the prior of the betas using the ranks
+  if (response_given) {
+    Sigma_beta <- matrix(0, nrow = n_beta, ncol = n_beta)
+    beta_vars <- c(beta_vars[1], rep(beta_vars[-1], c(r, r.vec)))
+    diag(Sigma_beta) <- beta_vars
   }
 
   if (response_given) {
