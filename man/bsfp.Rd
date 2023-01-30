@@ -14,7 +14,8 @@ bsfp(
   nsample,
   burnin = NULL,
   progress = TRUE,
-  starting_values = NULL
+  starting_values = NULL,
+  save_structures = TRUE
 )
 }
 \arguments{
@@ -55,6 +56,11 @@ Default is \code{nsample/2}, which is used if \code{burnin=NULL}.}
 
 \item{starting_values}{List of initial values for Gibbs sampler. If \code{NULL} and \code{nninit=TRUE},
 fixes at posterior mode. If \code{NULL} and \code{nninit=FALSE}, simulates from prior distributions.}
+
+\item{save_structures}{Boolean indicating whether the estimated structures should be saved.
+Default is TRUE If TRUE, the estimated structures are saved. If FALSE, only the imputed values are saved
+if missing values are present. This may save on memory requirements, especially if predicting held-out
+values in cross validation.}
 }
 \value{
 Returns a list with the following elements:
