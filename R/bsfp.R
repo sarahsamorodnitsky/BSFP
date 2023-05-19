@@ -507,14 +507,13 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, prior_beta_data_dr
     lambda2_intercept <- 1e6
 
     # Establish prior variance on the joint factors
-    lambda2_joint <- var(Y)/mean(apply(V0[[1,1]], 2, var))
+    lambda2_joint <- var(Y[!is.na(Y)])/mean(apply(V0[[1,1]], 2, var))
 
     # Establish prior variance on the individual factors
-    lambda2_indiv1 <- var(Y)/mean(apply(Vs0[[1,1]], 2, var))
-    lambda2_indiv2 <- var(Y)/mean(apply(Vs0[[1,2]], 2, var))
+    lambda2_indiv <- var(Y[!is.na(Y)])/sapply(1:q, function(s) mean(apply(Vs0[[1,s]], 2, var)))
 
     # Combine
-    beta_vars <- c(lambda2_intercept, lambda2_joint, lambda2_indiv1, lambda2_indiv2)
+    beta_vars <- c(lambda2_intercept, lambda2_joint, lambda2_indiv)
 
   }
 
