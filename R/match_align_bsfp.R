@@ -478,6 +478,19 @@ jointRot_multi <- function(lambda, eta, piv = NULL, index = 0) {
   # Apply the rotation matrix to the corresponding scores
   rotfact = mapply(`%*%`, eta, rots, SIMPLIFY = FALSE)
 
+  # If user-provided pivot matrix is given
+  if (!is.null(piv)) {
+    piv_index_to_return <- NULL
+  }
+
+  # If user supplied an index to use as pivot
+  if (!is.null(piv) & is.null(dim(piv))) {
+    piv = loads[[piv]]
+
+    # Save the posterior sample after burn-in that was used as pivot
+    piv_index_to_return <- piv
+  }
+
   # If no user-provided pivot is given, use default
   if (is.null(piv)) {
     norms = sapply(loads, norm, "2")
@@ -485,18 +498,6 @@ jointRot_multi <- function(lambda, eta, piv = NULL, index = 0) {
 
     # Save the posterior sample after burn-in that was used as pivot
     piv_index_to_return <- c(1:length(loads))[order(norms)][round(length(lambda)/2) + index]
-  }
-
-  # If user-provided pivot is given
-  if (is.matrix(piv)) {
-    piv_index_to_return <- NULL
-  }
-
-  if (!is.matrix(piv)) {
-    piv = loads[[piv]]
-
-    # Save the posterior sample after burn-in that was used as pivot
-    piv_index_to_return <- piv
   }
 
   # Match to the defined pivot
