@@ -2244,7 +2244,7 @@ summarize_factors <- function(data, Y = NULL, iters_burnin,
     Xm.summary = Xm.summary, Ym.summary = Ym.summary, # Missing data imputation
 
     # Miscellaneous
-    ranks = c(r, r.vec), # Ranks
+    ranks = ranks, # Ranks
     tau2.summary = tau2.summary) # Regression parameters
 
 }
