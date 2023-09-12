@@ -2173,7 +2173,7 @@ summarize_factors <- function(data, Y = NULL, iters_burnin,
     }
   }
 
-  if (!response_given) {
+  if (!response_given | is.null(tau2.draw)) {
     tau2.summary <- NULL
   }
 
