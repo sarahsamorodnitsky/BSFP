@@ -1929,7 +1929,7 @@ summarize_factors <- function(data, Y = NULL, iters_burnin,
     if (s == 1) {
       1:p.vec[s]
     } else {
-      (p.vec[s-1] + 1):cumsum(p.vec)[s]
+      (cumsum(p.vec)[s-1] + 1):cumsum(p.vec)[s]
     }
   })
 
@@ -2166,9 +2166,11 @@ summarize_factors <- function(data, Y = NULL, iters_burnin,
   # ---------------------------------------------------------------------------
 
   if (response_given) {
-    tau2.summary <- cbind.data.frame(Post.Mean = mean(unlist(tau2.draw)[iters_burnin]),
-                                     Lower.95.CI = quantile(unlist(tau2.draw)[iters_burnin], 0.025),
-                                     Upper.95.CI = quantile(unlist(tau2.draw)[iters_burnin], 0.975))
+    if (!is.null(tau2.draw)) {
+      tau2.summary <- cbind.data.frame(Post.Mean = mean(unlist(tau2.draw)[iters_burnin]),
+                                       Lower.95.CI = quantile(unlist(tau2.draw)[iters_burnin], 0.025),
+                                       Upper.95.CI = quantile(unlist(tau2.draw)[iters_burnin], 0.975))
+    }
   }
 
   if (!response_given) {
