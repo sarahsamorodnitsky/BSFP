@@ -2260,11 +2260,24 @@ summarize_factors <- function(data, Y = NULL, iters_burnin,
 #' @param structure (string) specify one of "joint" or "individual"
 #' @param output (string) specify one of "scores", "loadings", "betas"
 #' @param source (vector of ints) specify source by index from 1:q or NULL if plotting the joint scores
+#' @param source.name (string) Specify the name of the source, e.g. "Expression" or "Metabolome"
 #' @param sample.labels (vector of strings) NULL if \code{output != scores}. Otherwise, labels for plotting sample scores, e.g. c(1, "Control", "Control", ...). Could be the outcome used in BSFP. If NULL, plot will highlight credible intervals which don't contain 0.
 #' @param biomarker.names (vector of strings) NULL if \code{structure != "individual}. Otherwise, labels for plotting the biomarker loadings, e.g. c("Gene 1", "Gene 2", ...). If NULL, plot will highlight credible intervals which don't contain 0.
 #' @param label.x (Boolean) Should the x-axis labels be plotted? Default is FALSE. There may be many labels which makes the plot messy.
-plot_summaries <- function(summaries, structure, output, source = NULL, sample.labels = NULL,
-                           biomarker.labels = NULL, label.x = FALSE) {
+#'
+#' @details Plotting function for the posterior means and credible intervals generated from \code{summarize_factors}.
+#' Automatically orders the scores/loadings/regression coefficients by posterior mean for easy visualization.
+#' User can specify loadings or scores to be colored based on a factor using \code{biomarker.labels} or \code{sample.labels}, respectively.
+#' Outputs a list of plots for scores and loadings. See example for how to conveniently view each plot.
+#'
+#' @return Returns a list of plots for each factor if plotting loadings or scores. If plotting regression coefficients,
+#' outputs a list with 1 plot only.
+#'
+#' @export
+#'
+#' @examples
+plot_summaries <- function(summaries, structure, output, source = NULL, source.name = NULL,
+                           sample.labels = NULL, biomarker.labels = NULL, label.x = FALSE) {
 
   # Paste together structure and output names
   structure.output <- paste0(structure, ".", output)
@@ -2349,7 +2362,7 @@ plot_summaries <- function(summaries, structure, output, source = NULL, sample.l
 
     # Set the x- and y-axis labels
     xlab <- "Sample"
-    xlab <- ifelse(output != "scores", ifelse(output == "loadings", biomarker.names[source], "Regression Coefficients"), "Sample")
+    xlab <- ifelse(output != "scores", ifelse(output == "loadings", source.name, "Regression Coefficients"), "Sample")
     ylab <- paste0("Posterior Mean")
 
     # Plot the results for the scores
