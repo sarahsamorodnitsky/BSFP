@@ -2013,8 +2013,8 @@ summarize_factors <- function(data, Y = NULL, iters_burnin,
     names(joint.scores.summary) <- paste0("Joint.Factor.", 1:ranks[1])
 
     # Loadings
-    joint.loadings.summary <- lapply(1:ranks[1], function(r) {
-      lapply(1:q, function(s) {
+    joint.loadings.summary <- lapply(1:q, function(s) {
+      lapply(1:ranks[1], function(r) {
         load.matrix <- do.call(cbind, lapply(joint.loadings.final, function(iter) iter[p.ind[[s]],r,drop=FALSE]))
         summary.mat <- cbind.data.frame(Post.Mean = rowMeans(load.matrix),
                                         Lower.95.CI = apply(load.matrix, 1, function(row) quantile(row, 0.025)),
