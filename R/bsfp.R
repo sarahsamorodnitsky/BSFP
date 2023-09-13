@@ -2033,7 +2033,8 @@ summarize_factors <- function(data, Y = NULL, iters_burnin,
                                         Upper.95.CI = apply(beta.mat, 1, function(row) quantile(row, 0.975)))
         summary.mat
       })
-      names(joint.betas.summary) <- paste0("Joint.Factor.Regression.Coefficient.", 1:ranks[1])
+      joint.betas.summary <- do.call(rbind, joint.betas.summary)
+      rownames(joint.betas.summary) <- paste0("Joint.Factor.Regression.Coefficient.", 1:ranks[1])
     }
 
     if (!response_given) {
@@ -2143,7 +2144,8 @@ summarize_factors <- function(data, Y = NULL, iters_burnin,
                                           Upper.95.CI = apply(beta.mat, 1, function(row) quantile(row, 0.975)))
           summary.mat
         })
-        names(source.beta.list) <- paste0("Source.", s, ".Individual.Factor.Regression.Coefficient.", 1:ranks[s+1])
+        source.beta.list <- do.call(rbind, source.beta.list)
+        rownames(source.beta.list) <- paste0("Source.", s, ".Individual.Factor.Regression.Coefficient.", 1:ranks[s+1])
         source.beta.list
       } else {
         beta.mat <- do.call(cbind, lapply(individual.betas.final[[s]], function(iter) iter[1,,drop=FALSE]))
