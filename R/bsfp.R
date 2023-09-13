@@ -2276,6 +2276,50 @@ summarize_factors <- function(data, Y = NULL, iters_burnin,
 #' @export
 #'
 #' @examples
+#' # Setting up the data
+#' n <- 50
+#' p.vec <- c(75, 100)
+#' q <- 2
+#'
+#'# Setting up the model parameters
+#' true_params <- list(error_vars = c(1,1),
+#'                     joint_var = 1,
+#'                     indiv_vars = c(1,1),
+#'                     beta_vars = c(1, 1, rep(1, q)),
+#'                     response_vars = c(shape = 1, rate = 1))
+#'
+#' # Choose ranks
+#' r <- 3
+#' r.vec <- c(3, 3)
+#' ranks <- c(r, r.vec)
+#'
+#' # Number of posterior sampling iterations
+#' nsample <- 1000
+#' burnin <- nsample/2
+#' iters_burnin <- (burnin+1):nsample
+#'
+#'
+#' # Generate data
+#' data.c1 <- bsfp_data(p.vec, n, ranks, true_params, s2nX = NULL, s2nY = NULL, response = "continuous", sparsity = FALSE)
+#'
+#' # Run BSFP for 1000 iterations
+#' bsfp.c1 <- bsfp(data = data.c1$data, Y = data.c1$Y, nsample = nsample)
+#' # Run the alignment algorithm
+#' alignment.c1 <- match_align_bsfp(BSFP.fit = bsfp.c1, y = data.c1$Y,
+#'                                 model_params = bsfp.c1$model_params,
+#'                                 p.vec = p.vec, iters_burnin = iters_burnin)
+#'
+#' # Summarize aligned factors
+#' summary.aligned.c1 <- summarize_factors(data = data.c1$data, Y = data.c1$Y,
+#'                                         iters_burnin = iters_burnin,
+#'                                         aligned_results = alignment.c1,
+#'                                        ranks = bsfp.c1$ranks, tau2.draw = bsfp.c1$tau2.draw)
+#'
+#' # Plot joint loadings for source 1
+#' plots <- plot_summaries(summary.aligned.c1, structure = "joint", output = "loadings", source = 1, source.name = "Expression")
+#'
+#' # Plot joint scores
+#' plots <- plot_summaries(summary.aligned.c1, structure = "joint", output = "scores", source = 1)
 plot_summaries <- function(summaries, structure, output, source = NULL, source.name = NULL,
                            sample.labels = NULL, biomarker.labels = NULL, label.x = FALSE) {
 
