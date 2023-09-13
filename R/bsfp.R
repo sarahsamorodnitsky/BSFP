@@ -2327,7 +2327,7 @@ plot_summaries <- function(summaries, structure, output, source = NULL, source.n
   structure.output <- paste0(structure, ".", output)
 
   # Check if source was specified if not plotting joint scores
-  if (structure.output != "joint.scores" & is.null(source)) stop("You must specify the source argument (choose from 1:q where q is the number of sources)")
+  if (structure.output != "joint.scores" & output != "betas" & is.null(source)) stop("You must specify the source argument (choose from 1:q where q is the number of sources)")
 
   # Select the object from the summary
   obj.summary <- summaries[grepl(structure.output, names(summaries))][[1]]
