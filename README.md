@@ -125,6 +125,49 @@ summary.aligned.c1 <- summarize_factors(data = data.c1$data, Y = data.c1$Y,
                                         ranks = bsfp.c1$ranks, tau2.draw = bsfp.c1$tau2.draw)
 ```
 
+We may then want to visualize the posterior summaries of the estimated factors using the `plot_summaries` function. This function requires we specify which structure type (joint or individual) and estimated parameter we'd like to visualize (scores, loadings, regression coefficients). 
+
+```{r setting 1 plotting posterior summaries}
+# Plot summaries
+plots.joint.scores <- plot_summaries(summary.aligned.c1, structure = "joint", output = "scores")
+plots.joint.loadings.source1 <- plot_summaries(summary.aligned.c1, structure = "joint", output = "loadings", source = 1, source.name = "Expression")
+plots.joint.betas <- plot_summaries(summary.aligned.c1, structure = "joint", output = "betas")
+ 
+plots.individual.scores.source2 <- plot_summaries(summary.aligned.c1, structure = "individual", output = "scores", source = 2)
+plots.individual.loadings.source2 <- plot_summaries(summary.aligned.c1, structure = "individual", output = "loadings", source = 2, source.name = "Expression")
+plots.individuaul.betas.source2 <- plot_summaries(summary.aligned.c1, structure = "individual", output = "betas", source = 2)
+ 
+# View one at a time
+plots.joint.scores[[1]] # Joint factor 1
+plots.joint.loadings.source1[[2]] # Joint factor 2
+plots.joint.betas[[1]] # All regression coefficients for joint factors
+ 
+plots.individual.scores.source2[[1]] # Scores for individual factor 1 from source 2
+plots.individual.loadings.source2[[2]] # Loadings for individual factor 2 from source 2
+plots.individuaul.betas.source2[[1]] # All regression coefficients for individual factors for source 2
+ 
+# OR, output to a pdf (will output to current working directory)
+pdf("Joint_Scores_BSFP.pdf")
+plots.joint.scores
+dev.off()
+```
+
+Finally, we can examine the predictive accuracy of the model fit to the training data. This can also help us gauge convergence of the algorithm. 
+
+```{r setting 1 prediction accuracy}
+# Save the fitted values on the training data
+Y.pred <- bsfp.c1$EY.draw
+Y.pred <- do.call(cbind, lapply(Y.pred, function(i) i[[1,1]]))
+ 
+# Examine convergence
+plot(Y.pred[1,])
+plot(Y.pred[1,burnin:nsample]) # Add burn-in
+ 
+# Assess prediction accuracy
+Y.pred.mean <- rowMeans(Y.pred[,burnin:nsample])
+cor(data.c1$Y[[1,1]], Y.pred.mean)
+```
+
 # Setting 2: Multiple Imputation
 
 In setting 2, we consider inducing entrywise (missing-at-random) missingness among the data sources to illustrate multiple imputation with BSFP. We start by simulating some data from the model using the same parameters defined previously. We set 10\% of samples in each source to be missing using the `prop_missing` argument. 
