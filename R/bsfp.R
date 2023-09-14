@@ -46,15 +46,29 @@
 #' if desired to run Bayesian linear model with scores estimated separately. Otherwise,
 #' leave \code{NULL}.
 #' @param nsample Integer specifying the number of posterior samples to generate.
-#' @param burnin Integer specifying the number of posterior sampling iterations to burn.
-#' Default is \code{nsample/2}, which is used if \code{burnin=NULL}.
 #' @param progress Boolean indicating if a progress bar be displayed to visualize the progress of the sampler
 #' @param starting_values List of initial values for Gibbs sampler. If \code{NULL} and \code{nninit=TRUE},
 #' fixes at posterior mode. If \code{NULL} and \code{nninit=FALSE}, simulates from prior distributions.
 #' @param save_structures Boolean indicating whether the estimated structures should be saved.
-#' Default is TRUE If TRUE, the estimated structures are saved. If FALSE, only the imputed values are saved
-#' if missing values are present. This may save on memory requirements, especially if predicting held-out
-#' values in cross validation.
+#' Default is TRUE. If TRUE, the estimated overall (joint, individual) structures are saved. Setting to FALSE
+#' may save on memory requirements if inference on the overall structures is not of interest. Note that
+#' the overall structures may be calculated using the estimated loadings and scores, so one may choose to
+#' save those only.
+#' @param save_loadings_scores Boolean indicating whether estimated loadings and scores should be saved.
+#' Default is TRUE. If TRUE, the estimated (joint, individual) loadings and scores are saved. Setting to FALSE
+#' may save on memory requirements if inference on the loadings and scores is not of interest.
+#' @param save_predictive_model Boolean indicating whether the estimated regression coefficients, outcome variance
+#' (if outcome is continuous) and underlying continuous variable (if outcome is binary) should be saved. Setting to
+#' FALSE may save on memory requirements if inference on the predictive model is not of interest.
+#' @param save_imputations Boolean indicating whether the imputed values in the data and/or outcome should be saved.
+#' Setting to FALSE may save on memory requirements if inference on the imputed values is not of interest.
+#' @param thinning Integer indicating how posterior samples should be thinned. If thinning=10, for example,
+#' every 10th iteration is saved. Default is 1 which implies no thinning. Increasing the thinning may save on memory requirements.
+#' @param previous_init Path to previous UNIFAC initialization to save on time.
+#' @param save_init Boolean indicating whether the UNIFAC initialization should be saved. If TRUE, will be saved in current working directory.
+#' @param save_last_sample Boolean indicating whether the last posterior sample should be saved. This may be useful if more
+#' posterior samples may be needed and this value can be used as in the \code{starting_values} argument.
+#' If \code{save_loadings_scores = TRUE}, this is not necessary.
 #'
 #' @details BSFP assumes the features (rows) of each source are centered. It does not require features
 #' to be scaled to overall standard deviation 1. If initializing using the nuclear-norm penalized objective,
@@ -80,6 +94,7 @@
 #' \item{model_params}{List of hyperparameters used in model fitting. If not specified by user, these are the theoretical defaults. If specified by user, returns what was given.}
 #' \item{tau2.draw}{List of posterior samples for the response variance if the response was continuous}
 #' \item{beta.draw}{List of posterior samples for the regression coefficients used in the predictive model}
+#' \item{last.sample}{Last posterior sample for each estimated parameter to use as a future starting value if needed.}
 #'
 #' @export
 #'
@@ -112,7 +127,10 @@
 #' # Run BSFP for 1000 iterations
 #' bsfp.c1 <- bsfp(data = data.c1$data, Y = data.c1$Y, nsample = nsample)
 
-bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, prior_beta_data_driven = FALSE, ranks = NULL, scores = NULL, nsample, burnin = NULL, progress = TRUE, starting_values = NULL, save_structures = TRUE) {
+bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, prior_beta_data_driven = FALSE,
+                 ranks = NULL, scores = NULL, nsample, progress = TRUE, starting_values = NULL,
+                 save_structures = TRUE, save_loadings_scores = TRUE, save_predictive_model = TRUE,
+                 save_imputations = TRUE, thinning = 1, previous_init = NULL, save_init = TRUE, save_last_sample = FALSE) {
 
   # ---------------------------------------------------------------------------
   # Determining type of input data
@@ -160,14 +178,8 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, prior_beta_data_dr
   p <- sum(p.vec) # Total number of features
   n <- ncol(data[[1,1]]) # Number of subjects
 
-  # Initialize the indices of features in each source
-  p.ind <- lapply(1:q, function(s) {
-    if (s == 1) {
-      1:p.vec[s]
-    } else {
-      (p.vec[s-1] + 1):cumsum(p.vec)[s]
-    }
-  })
+  # Adjust total number of samples to account for thinning
+  nsample.thin <- nsample/thinning
 
   # ---------------------------------------------------------------------------
   # Is there a response vector?
@@ -202,7 +214,7 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, prior_beta_data_dr
     lambda_joint <- sqrt(sum(p.vec)) + sqrt(n)
     sigma2_joint <- joint_var <- 1/(lambda_joint)
 
-    # Variance of individual structure for Biocrates
+    # Variance of individual structure
     lambda_indiv <- sapply(1:q, function(s) sqrt(p.vec[s]) + sqrt(n))
     sigma2_indiv <- indiv_vars <- 1/(lambda_indiv)
 
@@ -220,7 +232,6 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, prior_beta_data_dr
     # For the response vector
     shape <- 0.01
     rate <- 0.01
-
   }
 
   # If model parameters are given
@@ -270,14 +281,23 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, prior_beta_data_dr
 
   if (nninit) {
 
-    # If there is not missing data
-    if (!missingness_in_data) {
-      rank_init <- BIDIFAC(data, rmt = TRUE, pbar = FALSE, scale_back = FALSE)
+    if (is.null(previous_init)) {
+      # If there is not missing data
+      if (!missingness_in_data) {
+        rank_init <- BIDIFAC(data, rmt = TRUE, pbar = FALSE, scale_back = FALSE)
+      }
+
+      # If there is missing data
+      if (missingness_in_data) {
+        rank_init <- impute.BIDIFAC(data = data, rmt = TRUE, pbar = FALSE, scale_back = FALSE)
+      }
+
+      # Save the initialization
+      if (save_init) save(rank_init, file = paste0("BIDIFAC_initialization_", lubridate::today(), ".rda"))
     }
 
-    # If there is missing data
-    if (missingness_in_data) {
-      rank_init <- impute.BIDIFAC(data = data, rmt = TRUE, pbar = FALSE, scale_back = FALSE)
+    if (!is.null(previous_init)) {
+      load(previous_init)
     }
 
     # Print when finished
@@ -337,25 +357,36 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, prior_beta_data_dr
   # Storing the posterior samples
   # ---------------------------------------------------------------------------
 
-  V.draw <- lapply(1:nsample, function(i) matrix(list(), nrow = 1, ncol = 1))
-  U.draw <- lapply(1:nsample, function(i) matrix(list(), nrow = q, ncol = 1))
-  Vs.draw <- lapply(1:nsample, function(i) matrix(list(), nrow = 1, ncol = q))
-  W.draw <- lapply(1:nsample, function(i) matrix(list(), nrow = q, ncol = q))
+  # Initialize lists to store posterior samples
+  V.draw <- U.draw <- Vs.draw <- W.draw <- beta.draw <- tau2.draw <-
+    Z.draw <- Ym.draw <- VStar.draw <- Xm.draw <- NULL
 
-  if (!response_given) {
-    beta.draw <- tau2.draw <- Z.draw <- Ym.draw <- VStar.draw <- lapply(1:nsample, function(i) matrix(list(), nrow = 1, ncol = 1))
+  # If storing the structures, initialize full lists for storage
+  if (save_loadings_scores) {
+    V.draw <- lapply(1:nsample.thin, function(i) matrix(list(), nrow = 1, ncol = 1))
+    U.draw <- lapply(1:nsample.thin, function(i) matrix(list(), nrow = q, ncol = 1))
+    Vs.draw <- lapply(1:nsample.thin, function(i) matrix(list(), nrow = 1, ncol = q))
+    W.draw <- lapply(1:nsample.thin, function(i) matrix(list(), nrow = q, ncol = q))
   }
 
-  if (!missingness_in_data) {
-    Xm.draw <- lapply(1:nsample, function(i) matrix(list(), nrow = q, ncol = 1))
-  }
+  # if (!response_given) {
+  #   beta.draw <- tau2.draw <- Z.draw <- Ym.draw <- VStar.draw <- lapply(1:nsample.thin, function(i) matrix(list(), nrow = 1, ncol = 1))
+  # }
+
+  # if (!missingness_in_data) {
+  #   Xm.draw <- lapply(1:nsample.thin, function(i) matrix(list(), nrow = q, ncol = 1))
+  # }
 
   if (response_given) {
-    beta.draw <- Z.draw <- tau2.draw <- Ym.draw <- VStar.draw <- lapply(1:nsample, function(i) matrix(list(), nrow = 1, ncol = 1))
+    if (save_predictive_model) {
+      beta.draw <- Z.draw <- tau2.draw <- VStar.draw <- lapply(1:nsample.thin, function(i) matrix(list(), nrow = 1, ncol = 1))
+    }
+
+    if (save_imputations) Ym.draw <- lapply(1:nsample.thin, function(i) matrix(list(), nrow = 1, ncol = 1))
   }
 
   if (missingness_in_data) {
-    Xm.draw <- lapply(1:nsample, function(i) matrix(list(), nrow = q, ncol = 1))
+    if (save_imputations) Xm.draw <- lapply(1:nsample.thin, function(i) matrix(list(), nrow = q, ncol = 1))
   }
 
   # ---------------------------------------------------------------------------
@@ -582,25 +613,45 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, prior_beta_data_dr
   # Storing the initial values
   # ---------------------------------------------------------------------------
 
-  V.draw[[1]] <- V0
-  U.draw[[1]] <- U0
-  Vs.draw[[1]] <- Vs0
-  W.draw[[1]] <- W0
+  # Save the initial values in temp variables
+  V.iter <- V0
+  U.iter <- U0
+  Vs.iter <- Vs0
+  W.iter <- W0
+
+  if (save_loadings_scores) {
+    V.draw[[1]] <- V0
+    U.draw[[1]] <- U0
+    Vs.draw[[1]] <- Vs0
+    W.draw[[1]] <- W0
+  }
 
   if (response_given) {
-    beta.draw[[1]][[1,1]] <- beta0
-    Z.draw[[1]][[1,1]] <- Z0
-    tau2.draw[[1]][[1,1]] <- tau20
-    VStar.draw[[1]][[1,1]] <- VStar0
+
+    # Save initial values in temp variables
+    beta.iter <- beta0
+    Z.iter <- Z0
+    tau2.iter <- tau20
+    VStar.iter <- VStar0
+
+    # Store in lists
+    if (save_predictive_model) {
+      beta.draw[[1]][[1,1]] <- beta0
+      Z.draw[[1]][[1,1]] <- Z0
+      tau2.draw[[1]][[1,1]] <- tau20
+      VStar.draw[[1]][[1,1]] <- VStar0
+    }
 
     if (missingness_in_response) {
-      Ym.draw[[1]][[1,1]] <- Ym0
+      Ym.iter <- Ym0
+      if (save_imputations) Ym.draw[[1]][[1,1]] <- Ym0
     }
 
   }
 
   if (missingness_in_data) {
-    Xm.draw[[1]] <- Xm0
+    Xm.iter <- Xm0
+    if (save_imputations) Xm.draw[[1]] <- Xm0
   }
 
   # ---------------------------------------------------------------------------
@@ -641,24 +692,30 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, prior_beta_data_dr
   # Start Gibbs sampling!
   # ---------------------------------------------------------------------------
 
+  # Initialize counter for saving posterior samples
+  ii <- 1
+
   for (iter in 1:(nsample-1)) {
     if (progress) svMisc::progress(iter/((nsample-1)/100))
+
+    # Update counter
+    if (iter %% thinning == 0) ii <- ii + 1
 
     # ---------------------------------------------------------------------------
     # Storing the current values of the parameters
     # ---------------------------------------------------------------------------
 
-    if (save_structures | iter == 1) {
-      V.iter <- V.draw[[iter]]
-      U.iter <- U.draw[[iter]]
-      Vs.iter <- Vs.draw[[iter]]
-      W.iter <- W.draw[[iter]]
-    }
+    # if (save_structures | iter == 1) {
+    #   V.iter <- V.draw[[iter]]
+    #   U.iter <- U.draw[[iter]]
+    #   Vs.iter <- Vs.draw[[iter]]
+    #   W.iter <- W.draw[[iter]]
+    # }
 
     if (response_given) {
-      if (save_structures | iter == 1) {
-        # The current values of the betas
-        beta.iter <- beta.draw[[iter]][[1,1]]
+      # if (save_structures | iter == 1) {
+        # # The current values of the betas
+        # beta.iter <- beta.draw[[iter]][[1,1]]
 
         # Creating a matrix of the joint and individual effects
         beta_indiv.iter <- matrix(list(), nrow = q, ncol = 1)
@@ -683,18 +740,18 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, prior_beta_data_dr
           }
         }
 
-        if (response_type == "binary") {
-          Z.iter <- Z.draw[[iter]][[1,1]]
-        }
-
-        if (response_type == "continuous") {
-          tau2.iter <- tau2.draw[[iter]]
-        }
-      }
+        # if (response_type == "binary") {
+        #   Z.iter <- Z.draw[[iter]][[1,1]]
+        # }
+        #
+        # if (response_type == "continuous") {
+        #   tau2.iter <- tau2.draw[[iter]]
+        # }
+      # }
 
       if (missingness_in_response) {
         # Save the current imputations for the missing values
-        Ym.iter <- Ym.draw[[iter]][[1,1]]
+        # Ym.iter <- Ym.draw[[iter]][[1,1]]
 
         # Creating the completed outcome vector
         Y_complete <- Y
@@ -715,7 +772,8 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, prior_beta_data_dr
 
       # Fill in the completed matrices with the imputed values
       for (s in 1:q) {
-        X_complete[[s,1]][missing_obs[[s]]] <- Xm.draw[[iter]][[s,1]]
+        # X_complete[[s,1]][missing_obs[[s]]] <- Xm.draw[[iter]][[s,1]]
+        X_complete[[s,1]][missing_obs[[s]]] <- Xm.iter[[s,1]]
       }
     }
 
@@ -809,7 +867,7 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, prior_beta_data_dr
 
       # Updating the value of V
       # V.iter <- V.draw[[iter+1]]
-      if (save_structures) V.draw[[iter+1]][[1,1]] <- V.iter[[1,1]]
+      if (save_loadings_scores & (iter %% thinning == 0)) V.draw[[ii]][[1,1]] <- V.iter[[1,1]]
 
       # -------------------------------------------------------------------------
       # Posterior sample for Us
@@ -837,7 +895,7 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, prior_beta_data_dr
       }
 
       # U.iter <- U.draw[[iter+1]]
-      if (save_structures) U.draw[[iter+1]] <- U.iter
+      if (save_loadings_scores & (iter %% thinning == 0)) U.draw[[ii]] <- U.iter
 
       # -------------------------------------------------------------------------
       # Posterior sample for Vs, s=1,...,q
@@ -908,7 +966,7 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, prior_beta_data_dr
 
       # Update the current value of V
       # Vs.iter <- Vs.draw[[iter+1]]
-      if (save_structures) Vs.draw[[iter+1]] <- Vs.iter
+      if (save_loadings_scores & (iter %% thinning == 0)) Vs.draw[[ii]] <- Vs.iter
 
       # Combine current values of V and V.
       V.iter.star.joint <- V.iter
@@ -926,7 +984,7 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, prior_beta_data_dr
       VStar.iter <- cbind(1, do.call(cbind, V.iter.star.joint), do.call(cbind, Vs.iter.star))
 
       # Save the current VStar
-      if (save_structures) VStar.draw[[iter+1]][[1,1]] <- VStar.iter
+      if (save_loadings_scores & (iter %% thinning == 0)) VStar.draw[[ii]][[1,1]] <- VStar.iter
 
       # -------------------------------------------------------------------------
       # Posterior sample for W
@@ -981,7 +1039,7 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, prior_beta_data_dr
       }
 
       # Update the current value of W
-      if (save_structures) W.draw[[iter+1]] <- W.iter
+      if (save_loadings_scores & (iter %% thinning == 0)) W.draw[[ii]] <- W.iter
 
     }
 
@@ -1002,15 +1060,15 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, prior_beta_data_dr
       }
 
       if (response_type == "continuous") {
-        Bbeta <- solve((1/tau2.iter[[1,1]][[1,1]]) * t(VStar.iter) %*% VStar.iter + SigmaBetaInv)
-        bbeta <- (1/tau2.iter[[1,1]][[1,1]]) * t(VStar.iter) %*% Y_complete
+        Bbeta <- solve((1/tau2.iter[[1,1]]) * t(VStar.iter) %*% VStar.iter + SigmaBetaInv)
+        bbeta <- (1/tau2.iter[[1,1]]) * t(VStar.iter) %*% Y_complete
       }
 
       # beta.draw[[iter+1]][[1,1]]
       beta.iter <- matrix(MASS::mvrnorm(1, mu = Bbeta %*% bbeta, Sigma = Bbeta), ncol = 1)
 
       # Update the current value of beta
-      if (save_structures) beta.draw[[iter+1]][[1,1]] <- beta.iter
+      if (save_predictive_model & (iter %% thinning == 0)) beta.draw[[ii]][[1,1]] <- beta.iter
 
       # Creating a matrix of the joint and individual effects
       beta_indiv.iter <- matrix(list(), ncol = 1, nrow = q)
@@ -1043,10 +1101,10 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, prior_beta_data_dr
     if (response_given) {
       if (response_type == "continuous") {
         # tau2.draw[[iter+1]][[1,1]]
-        tau2.iter[[1,1]][[1,1]] <- matrix(1/rgamma(1, shape = shape + (n/2), rate = rate + 0.5 * sum((Y_complete - VStar.iter %*% beta.iter)^2)))
+        tau2.iter[[1,1]] <- matrix(1/rgamma(1, shape = shape + (n/2), rate = rate + 0.5 * sum((Y_complete - VStar.iter %*% beta.iter)^2)))
 
         # Update the current value of tau2
-        if (save_structures) tau2.draw[[iter+1]] <- tau2.iter
+        if (save_predictive_model & (iter %% thinning == 0)) tau2.draw[[ii]] <- tau2.iter
       }
     }
 
@@ -1057,7 +1115,7 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, prior_beta_data_dr
     if (response_given) {
       if (response_type == "binary") {
         # Z.draw[[iter+1]][[1,1]]
-        Z.iter[[1,1]] <- matrix(sapply(1:n, function(i) {
+        Z.iter <- matrix(sapply(1:n, function(i) {
           if (Y_complete[i,] == 1) {
             truncnorm::rtruncnorm(1, a = 0, mean = (VStar.iter %*% beta.iter)[i,], sd = 1)
           } else {
@@ -1065,7 +1123,7 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, prior_beta_data_dr
           }
         }), ncol = 1)
 
-        if (save_structures) Z.draw[[iter+1]] <- Z.iter
+        if (save_predictive_model & (iter %% thinning == 0)) Z.draw[[ii]] <- Z.iter
       }
     }
 
@@ -1076,20 +1134,27 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, prior_beta_data_dr
     if (response_given) {
       if (missingness_in_response) {
         if (response_type == "continuous") {
-          Ym.draw[[iter+1]][[1,1]] <- matrix(rnorm(n, mean = VStar.iter %*% beta.iter, sd = sqrt(tau2.iter[[1,1]])), ncol = 1)[missing_obs_Y,, drop = FALSE]
+          # Ym.draw[[iter+1]][[1,1]] <- matrix(rnorm(n, mean = VStar.iter %*% beta.iter, sd = sqrt(tau2.iter[[1,1]])), ncol = 1)[missing_obs_Y,, drop = FALSE]
+          Ym.iter <- matrix(rnorm(n, mean = VStar.iter %*% beta.iter, sd = sqrt(tau2.iter[[1,1]])), ncol = 1)[missing_obs_Y,, drop = FALSE]
         }
 
         if (response_type == "binary") {
-          Ym.draw[[iter+1]][[1,1]] <- matrix(rbinom(n, size = 1, prob = pnorm(VStar.iter %*% beta.iter)), ncol = 1)[missing_obs_Y,, drop = FALSE]
+          # Ym.draw[[iter+1]][[1,1]] <- matrix(rbinom(n, size = 1, prob = pnorm(VStar.iter %*% beta.iter)), ncol = 1)[missing_obs_Y,, drop = FALSE]
+          Ym.iter <- matrix(rbinom(n, size = 1, prob = pnorm(VStar.iter %*% beta.iter)), ncol = 1)[missing_obs_Y,, drop = FALSE]
         }
+
+        if (save_imputations & (iter %% thinning == 0)) Ym.draw[[ii]] <- Ym.iter
       }
     }
 
     if (missingness_in_data) {
       for (s in 1:q) {
         Es <-  matrix(rnorm(p.vec[s]*n, 0, sqrt(error_vars[s])), nrow = p.vec[s], ncol = n)
-        Xm.draw[[iter+1]][[s,1]] <- matrix((U.iter[[s,1]] %*% t(V.iter[[1,1]]) + W.iter[[s,s]] %*% t(Vs.iter[[1,s]]) + Es)[missing_obs[[s]]])
+        # Xm.draw[[iter+1]][[s,1]] <- matrix((U.iter[[s,1]] %*% t(V.iter[[1,1]]) + W.iter[[s,s]] %*% t(Vs.iter[[1,s]]) + Es)[missing_obs[[s]]])
+        Xm.iter[[s,1]] <- matrix((U.iter[[s,1]] %*% t(V.iter[[1,1]]) + W.iter[[s,s]] %*% t(Vs.iter[[1,s]]) + Es)[missing_obs[[s]]])
       }
+
+      if (save_imputations & (iter %% thinning == 0)) Xm.draw[[ii]] <- Xm.iter
     }
   }
 
@@ -1099,9 +1164,11 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, prior_beta_data_dr
 
   # If there is any missingness
   if (missingness_in_data) {
-    for (iter in 1:nsample) {
-      for (s in 1:q) {
-        Xm.draw[[iter]][[s,1]] <- Xm.draw[[iter]][[s,1]] * sigma.mat[s,1]
+    if (save_imputations) {
+      for (iter in 1:nsample.thin) {
+        for (s in 1:q) {
+          Xm.draw[[iter]][[s,1]] <- Xm.draw[[iter]][[s,1]] * sigma.mat[s,1]
+        }
       }
     }
   }
@@ -1110,15 +1177,18 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, prior_beta_data_dr
   # Calculating the joint and individual structure, scaled to the data
   # ---------------------------------------------------------------------------
 
-  # Storing the structures at each Gibbs sampling iteration
-  J.draw <- A.draw <- S.draw <- lapply(1:nsample, function(i) matrix(list(), nrow = q, ncol = 1))
-
-  # Calculating the structure for Y at each Gibbs sampling iteration
-  EY.draw <- lapply(1:nsample, function(i) matrix(list(), nrow = 1, ncol = 1))
+  # Initialize lists to store the overall structures
+  J.draw <- A.draw <- S.draw <- EY.draw <- NULL
 
   if (save_structures) {
     if (is.null(scores)) {
-      for (iter in 1:nsample) {
+      # Storing the structures at each Gibbs sampling iteration
+      J.draw <- A.draw <- S.draw <- lapply(1:nsample.thin, function(i) matrix(list(), nrow = q, ncol = 1))
+
+      # Calculating the structure for Y at each Gibbs sampling iteration
+      EY.draw <- lapply(1:nsample.thin, function(i) matrix(list(), nrow = 1, ncol = 1))
+
+      for (iter in 1:nsample.thin) {
         for (s in 1:q) {
           # Calculating the joint structure and scaling by sigma.mat
           J.draw[[iter]][[s,1]] <- (U.draw[[iter]][[s,1]] %*% t(V.draw[[iter]][[1,1]])) * sigma.mat[s,1]
@@ -1144,6 +1214,31 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, prior_beta_data_dr
     }
   }
 
+  # ---------------------------------------------------------------------------
+  # Save the last sample if more posterior samples are needed
+  # ---------------------------------------------------------------------------
+
+  last.iter <- list(V.iter = NULL, U.iter = NULL, Vs.iter = NULL, W.iter = NULL,
+                    beta.iter = NULL, tau2.iter = NULL, Z.iter = NULL,
+                    Ym.iter = NULL, Xm.iter = NULL)
+
+  if (save_last_sample) {
+    last.iter$V.iter <- V.iter
+    last.iter$U.iter <- U.iter
+    last.iter$Vs.iter <- Vs.iter
+    last.iter$W.iter <- W.iter
+
+    if (response_given) {
+      last.iter$beta.iter <- beta.iter
+
+      if (response_type == "continuous") last.iter$tau2.iter <- tau2.iter
+      if (response_type == "binary") last.iter$Z.iter <- Z.iter
+      if (missingness_in_response) last.iter$Ym.iter <- Ym.iter
+    }
+
+    if (missingness_in_data) last.iter$Xm.iter <- Xm.iter
+  }
+
   # Return
   list(data = data, # Returning the scaled version of the data
        Y = Y, # Return the response vector
@@ -1154,7 +1249,8 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, prior_beta_data_dr
        scores = scores, # Scores if provided by another method
        ranks = c(r, r.vec), # Ranks
        model_params = model_params, # Parameters used in model
-       tau2.draw = tau2.draw, beta.draw = beta.draw) # Regression parameters
+       tau2.draw = tau2.draw, beta.draw = beta.draw,  # Regression parameters
+       last.iter = last.iter) # Last posterior sample for each parameter
 }
 
 #' bsfp.predict
