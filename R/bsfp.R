@@ -94,7 +94,7 @@
 #' \item{model_params}{List of hyperparameters used in model fitting. If not specified by user, these are the theoretical defaults. If specified by user, returns what was given.}
 #' \item{tau2.draw}{List of posterior samples for the response variance if the response was continuous}
 #' \item{beta.draw}{List of posterior samples for the regression coefficients used in the predictive model}
-#' \item{last.sample}{Last posterior sample for each estimated parameter to use as a future starting value if needed.}
+#' \item{last.iter}{Last posterior sample for each estimated parameter to use as a future starting value if needed.}
 #'
 #' @export
 #'
