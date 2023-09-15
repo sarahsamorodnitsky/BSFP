@@ -1143,7 +1143,7 @@ bsfp <- function(data, Y, nninit = TRUE, model_params = NULL, prior_beta_data_dr
           Ym.iter <- matrix(rbinom(n, size = 1, prob = pnorm(VStar.iter %*% beta.iter)), ncol = 1)[missing_obs_Y,, drop = FALSE]
         }
 
-        if (save_imputations & (iter %% thinning == 0)) Ym.draw[[ii]] <- Ym.iter
+        if (save_imputations & (iter %% thinning == 0)) Ym.draw[[ii]][[1,1]] <- Ym.iter
       }
     }
 
