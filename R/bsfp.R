@@ -1412,7 +1412,7 @@ bsfp.predict <- function(bsfp.fit, test_data, Y_test, model_params = NULL, nsamp
   beta.train <- bsfp.fit$beta.draw
 
   # Save the response variance
-  tau2.train <- bsfp.fit$tau2.draw
+  tau2.train <- unlist(bsfp.fit$tau2.draw)
 
   # ---------------------------------------------------------------------------
   # Storing the posterior samples
@@ -1567,7 +1567,7 @@ bsfp.predict <- function(bsfp.fit, test_data, Y_test, model_params = NULL, nsamp
       }
 
       if (response_type == "continuous") {
-        tau2.iter <- tau2.train[[iter]][[1,1]]
+        tau2.iter <- tau2.train[iter]
       }
 
       Y_complete <- Y_test
@@ -1583,13 +1583,13 @@ bsfp.predict <- function(bsfp.fit, test_data, Y_test, model_params = NULL, nsamp
     if (response_given) {
       if (response_type == "continuous") {
         # For V - Combined error variances between X1, X2, and Y
-        SigmaVInv <- diag(c(rep(1/error_vars, p.vec), 1/tau2.iter[[1,1]]))
+        SigmaVInv <- diag(c(rep(1/error_vars, p.vec), 1/tau2.iter))
 
         # For Vs
         SigmaVsInv <- matrix(list(), nrow = q, ncol = q)
 
         for (s in 1:q) {
-          SigmaVsInv[[s,s]] <- diag(c(rep(1/error_vars[s], p.vec[s]), 1/tau2.iter[[1,1]]))
+          SigmaVsInv[[s,s]] <- diag(c(rep(1/error_vars[s], p.vec[s]), 1/tau2.iter))
         }
       }
     }
@@ -1795,7 +1795,7 @@ bsfp.predict <- function(bsfp.fit, test_data, Y_test, model_params = NULL, nsamp
     if (response_given) {
       if (response_type == "continuous") {
         # Update the current value of tau2
-        tau2.iter <- tau2.train[[iter+1]][[1,1]]
+        tau2.iter <- tau2.train[iter+1]
       }
     }
 
