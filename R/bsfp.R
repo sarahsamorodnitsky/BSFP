@@ -2372,6 +2372,66 @@ summarize_factors <- function(data, Y = NULL, iters_burnin,
 #' @export
 #'
 #' @examples
+#' #' # Setting up the data
+#' n <- 50
+#' p.vec <- c(75, 100)
+#' q <- 2
+#'
+#' # Setting up the model parameters
+#' true_params <- list(error_vars = c(1,1),
+#'                     joint_var = 1,
+#'                    indiv_vars = c(1,1),
+#'                    beta_vars = c(1, 1, rep(1, q)),
+#'                    response_vars = c(shape = 1, rate = 1))
+#'
+#' # Choose ranks
+#' r <- 3
+#' r.vec <- c(3, 3)
+#' ranks <- c(r, r.vec)
+#'
+#' # Number of posterior sampling iterations
+#' nsample <- 1000
+#' burnin <- nsample/2
+#' iters_burnin <- (burnin+1):nsample
+#'
+#' # Generate data
+#' data.c1 <- bsfp_data(p.vec, n, ranks, true_params, s2nX = NULL, s2nY = NULL, response = "continuous", sparsity = FALSE)
+#'
+#' # Run BSFP for 1000 iterations
+#' bsfp.c1 <- bsfp(data = data.c1$data, Y = data.c1$Y, nsample = nsample)
+#'
+#' # Run the alignment algorithm
+#' alignment.c1 <- match_align_bsfp(BSFP.fit = bsfp.c1, y = data.c1$Y,
+#'                                  model_params = bsfp.c1$model_params,
+#'                                  p.vec = p.vec, iters_burnin = iters_burnin)
+#'
+#' # Summarize aligned factors
+#' summary.aligned.c1 <- summarize_factors(data = data.c1$data, Y = data.c1$Y,
+#'                                         iters_burnin = iters_burnin,
+#'                                         aligned_results = alignment.c1,
+#'                                         ranks = bsfp.c1$ranks, tau2.draw = bsfp.c1$tau2.draw)
+#' # Plot summaries
+#' plots.joint.scores <- plot_summaries(summary.aligned.c1, structure = "joint", output = "scores")
+#' plots.joint.loadings.source1 <- plot_summaries(summary.aligned.c1, structure = "joint", output = "loadings", source = 1, source.name = "Expression")
+#' plots.joint.betas <- plot_summaries(summary.aligned.c1, structure = "joint", output = "betas")
+#'
+#' plots.individual.scores.source2 <- plot_summaries(summary.aligned.c1, structure = "individual", output = "scores", source = 2)
+#' plots.individual.loadings.source2 <- plot_summaries(summary.aligned.c1, structure = "individual", output = "loadings", source = 2, source.name = "Expression")
+#' plots.individuaul.betas.source2 <- plot_summaries(summary.aligned.c1, structure = "individual", output = "betas", source = 2)
+#'
+#' # View one at a time
+#' plots.joint.scores[[1]] # Joint factor 1
+#' plots.joint.loadings.source1[[2]] # Joint factor 2
+#' plots.joint.betas[[1]] # All regression coefficients for joint factors
+#'
+#' plots.individual.scores.source2[[1]] # Scores for individual factor 1 from source 2
+#' plots.individual.loadings.source2[[2]] # Loadings for individual factor 2 from source 2
+#' plots.individuaul.betas.source2[[1]] # All regression coefficients for individual factors for source 2
+#'
+#' # OR, output to a pdf (will output to current working directory)
+#' pdf("Joint_Scores_BSFP.pdf")
+#' plots.joint.scores
+#' dev.off()
 plot_summaries <- function(summaries, structure, output, source = NULL, xlab.name = NULL,
                            sample.labels = NULL, biomarker.labels = NULL, label.x = FALSE) {
 
