@@ -2,20 +2,27 @@
 % Please edit documentation in R/bsfp.R
 \name{bsfp}
 \alias{bsfp}
-\title{Bayesian Simultaneous Factorization and Prediction (BSFP)}
+\title{Bayesian Simultaneous Factorization and Prediction (BSFP).}
 \usage{
 bsfp(
   data,
   Y,
   nninit = TRUE,
   model_params = NULL,
+  prior_beta_data_driven = FALSE,
   ranks = NULL,
   scores = NULL,
   nsample,
-  burnin = NULL,
   progress = TRUE,
   starting_values = NULL,
-  save_structures = TRUE
+  save_structures = TRUE,
+  save_loadings_scores = TRUE,
+  save_predictive_model = TRUE,
+  save_imputations = TRUE,
+  thinning = 1,
+  previous_init = NULL,
+  save_init = TRUE,
+  save_last_sample = FALSE
 )
 }
 \arguments{
@@ -38,7 +45,15 @@ indiv_vars = c(), beta_vars = c(), response_vars = c())}. If we have \eqn{q} sou
 \code{response_vars} must define the shape and rate for the Inverse-Gamma prior of the response variance.
 \code{beta_vars} must be of length \eqn{q+1}
 to specify the prior variance on the intercept, the prior variance on each joint factor's
-contribution to the outcome, and for each individual factor's contribution from each source.}
+contribution to the outcome, and for each individual factor's contribution from each source.
+If not specified, must specify prior_beta_data_driven to be TRUE.}
+
+\item{prior_beta_data_driven}{Boolean indicating whether the prior variances on the regression
+coefficients should scale with the data. If TRUE, the variance of each regression coefficient is
+the ratio of the variance of the outcome over the average variance of each joint or individual factor
+(depending on the coefficient). The results from initializing with BIDIFAC will be used, or the user-provided
+starting_values will be used. If FALSE, a default of 1 is used. For the intercept, a vague prior
+variance of 1e6 is used.}
 
 \item{ranks}{A list of length \eqn{q+1} for the ranks of the joint and individual structures.
 Leave \code{NULL} if \code{nninit=TRUE}.}
@@ -49,18 +64,38 @@ leave \code{NULL}.}
 
 \item{nsample}{Integer specifying the number of posterior samples to generate.}
 
-\item{burnin}{Integer specifying the number of posterior sampling iterations to burn.
-Default is \code{nsample/2}, which is used if \code{burnin=NULL}.}
-
 \item{progress}{Boolean indicating if a progress bar be displayed to visualize the progress of the sampler}
 
 \item{starting_values}{List of initial values for Gibbs sampler. If \code{NULL} and \code{nninit=TRUE},
 fixes at posterior mode. If \code{NULL} and \code{nninit=FALSE}, simulates from prior distributions.}
 
 \item{save_structures}{Boolean indicating whether the estimated structures should be saved.
-Default is TRUE If TRUE, the estimated structures are saved. If FALSE, only the imputed values are saved
-if missing values are present. This may save on memory requirements, especially if predicting held-out
-values in cross validation.}
+Default is TRUE. If TRUE, the estimated overall (joint, individual) structures are saved. Setting to FALSE
+may save on memory requirements if inference on the overall structures is not of interest. Note that
+the overall structures may be calculated using the estimated loadings and scores, so one may choose to
+save those only.}
+
+\item{save_loadings_scores}{Boolean indicating whether estimated loadings and scores should be saved.
+Default is TRUE. If TRUE, the estimated (joint, individual) loadings and scores are saved. Setting to FALSE
+may save on memory requirements if inference on the loadings and scores is not of interest.}
+
+\item{save_predictive_model}{Boolean indicating whether the estimated regression coefficients, outcome variance
+(if outcome is continuous) and underlying continuous variable (if outcome is binary) should be saved. Setting to
+FALSE may save on memory requirements if inference on the predictive model is not of interest.}
+
+\item{save_imputations}{Boolean indicating whether the imputed values in the data and/or outcome should be saved.
+Setting to FALSE may save on memory requirements if inference on the imputed values is not of interest.}
+
+\item{thinning}{Integer indicating how posterior samples should be thinned. If thinning=10, for example,
+every 10th iteration is saved. Default is 1 which implies no thinning. Increasing the thinning may save on memory requirements.}
+
+\item{previous_init}{Path to previous UNIFAC initialization to save on time.}
+
+\item{save_init}{Boolean indicating whether the UNIFAC initialization should be saved. If TRUE, will be saved in current working directory.}
+
+\item{save_last_sample}{Boolean indicating whether the last posterior sample should be saved. This may be useful if more
+posterior samples may be needed and this value can be used as in the \code{starting_values} argument.
+If \code{save_loadings_scores = TRUE}, this is not necessary.}
 }
 \value{
 Returns a list with the following elements:
@@ -82,6 +117,7 @@ Returns a list with the following elements:
 \item{model_params}{List of hyperparameters used in model fitting. If not specified by user, these are the theoretical defaults. If specified by user, returns what was given.}
 \item{tau2.draw}{List of posterior samples for the response variance if the response was continuous}
 \item{beta.draw}{List of posterior samples for the regression coefficients used in the predictive model}
+\item{last.iter}{Last posterior sample for each estimated parameter to use as a future starting value if needed.}
 }
 \description{
 Given multiple sources of data and a continuous or binary outcome measured on \eqn{n} samples,
