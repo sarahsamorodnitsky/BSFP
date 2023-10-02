@@ -2706,9 +2706,9 @@ log_joint_density <- function(data, Y = NULL, U.iter, V.iter, W.iter, Vs.iter, m
 
       if (response_type == "binary") {
         # The contribution of the observed response to the joint density
-        like <- like + sum(log(sapply(1:n, function(i) {
-          dbinom(Y_complete[[1,1]][i,], size = 1, prob = pnorm(VStar.iter %*% beta.iter[[1,1]]))
-        })))
+        like <- like + sum(sapply(1:n, function(i) {
+          dbinom(Y_complete[[1,1]][i,], size = 1, prob = pnorm(VStar.iter %*% beta.iter[[1,1]])[i,], log = TRUE)
+        }))
       }
     }
   }
