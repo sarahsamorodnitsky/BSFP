@@ -2453,7 +2453,7 @@ plot_summaries <- function(summaries, structure, output, source = NULL, xlab.nam
 
 
   # Check if an x-axis label was specified
-  if (structure == "loadings" & is.null(xlab.name)) stop("You must specify a name for the x-axis label using xlab.name, e.g. xlab.name = 'Gene Loadings' ")
+  if (output == "loadings" & is.null(xlab.name)) stop("You must specify a name for the x-axis label using xlab.name, e.g. xlab.name = 'Gene Loadings' ")
 
 
   # Select the object from the summary
