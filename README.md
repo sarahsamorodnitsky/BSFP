@@ -130,11 +130,11 @@ We may then want to visualize the posterior summaries of the estimated factors u
 ```{r setting 1 plotting posterior summaries}
 # Plot summaries
 plots.joint.scores <- plot_summaries(summary.aligned.c1, structure = "joint", output = "scores")
-plots.joint.loadings.source1 <- plot_summaries(summary.aligned.c1, structure = "joint", output = "loadings", source = 1, source.name = "Expression")
+plots.joint.loadings.source1 <- plot_summaries(summary.aligned.c1, structure = "joint", output = "loadings", source = 1, xlab.name = "Expression")
 plots.joint.betas <- plot_summaries(summary.aligned.c1, structure = "joint", output = "betas")
  
 plots.individual.scores.source2 <- plot_summaries(summary.aligned.c1, structure = "individual", output = "scores", source = 2)
-plots.individual.loadings.source2 <- plot_summaries(summary.aligned.c1, structure = "individual", output = "loadings", source = 2, source.name = "Expression")
+plots.individual.loadings.source2 <- plot_summaries(summary.aligned.c1, structure = "individual", output = "loadings", source = 2, xlab.name = "Expression")
 plots.individuaul.betas.source2 <- plot_summaries(summary.aligned.c1, structure = "individual", output = "betas", source = 2)
  
 # View one at a time
