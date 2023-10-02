@@ -292,6 +292,23 @@ bsfp.test.c3 <- bsfp.predict(bsfp.fit = bsfp.train.c3, test_data = test.c3, Y_te
                              nsample = nsample)
 ```
 
+We can then check the prediction accuracy.
+
+```{r}
+Y.pred <- bsfp.test.c3$EY.draw
+Y.pred <- do.call(cbind, lapply(Y.pred, function(i) i[[1,1]]))
+
+# Examine convergence
+plot(Y.pred[1,])
+plot(Y.pred[1,burnin:nsample]) # Add burn-in
+
+# Assess prediction accuracy
+Y.pred.mean <- rowMeans(Y.pred[,burnin:nsample])
+cor(Y.test.c3[[1,1]], Y.pred.mean)
+```
+
+
+
 
 # References
 <a id="1">[1]</a> 
