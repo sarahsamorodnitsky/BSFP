@@ -1,6 +1,6 @@
 # Bayesian Simultaneous Factorization and Prediction Functions
 
-#' Bayesian Simultaneous Factorization and Prediction (BSFP)
+#' Bayesian Simultaneous Factorization and Prediction (BSFP).
 #'
 #' Given multiple sources of data and a continuous or binary outcome measured on \eqn{n} samples,
 #' BSFP can decompose variation across the sources into joint and individual structures.
