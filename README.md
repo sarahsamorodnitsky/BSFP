@@ -139,6 +139,9 @@ plots.individuaul.betas.source2 <- plot_summaries(summary.aligned.c1, structure 
  
 # View one at a time
 plots.joint.scores[[1]] # Joint factor 1
+
+![image](https://github.com/sarahsamorodnitsky/BSFP/assets/35846144/77d9d3c5-e6d4-4614-a03f-cb5fc5deccc1)
+
 plots.joint.loadings.source1[[2]] # Joint factor 2
 plots.joint.betas[[1]] # All regression coefficients for joint factors
  
