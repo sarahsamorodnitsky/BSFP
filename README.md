@@ -104,6 +104,12 @@ plot(sapply(1:nsample, function(iter) {
 }))
 ```
 
+We can examine the proportion of variance explained by the estimated structures in the observed datasets using the `var_explained` function.
+
+```{r}
+bsfp.c1.var.explained <- var_explained(BSFP.fit = bsfp.c1, iters_burnin = iters_burnin, source.names = c("Expression", "Methylation"))
+```
+
 As mentioned above, some model parameters are not identifiable immediately from model fitting due to rotational, permutation, and sign ambiguity. To address this, we modify the MatchAlign algorithm [[2]](#2) to address non-identifiability among the posterior samples. Our code is modified from the R package `infinitefactor` provided by Evan Poworoznek [[3]](#3).
 
 ```{r setting 1 alignment}
