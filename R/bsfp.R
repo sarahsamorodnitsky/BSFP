@@ -3225,6 +3225,37 @@ bsfp_data <- function(p.vec, n, ranks, true_params, s2nX = NULL, s2nY = NULL, re
 #' of variance explained by the individual structures in the corresponding data source. }
 #'
 #' @export
+#'
+#' @examples
+#' # Setting up the data
+#' n <- 50
+#' p.vec <- c(75, 100)
+#' q <- 2
+#'
+#' # Setting up the model parameters
+#' true_params <- list(error_vars = c(1,1),
+#'                     joint_var = 1,
+#'                     indiv_vars = c(1,1),
+#'                     beta_vars = c(1, 1, rep(1, q)),
+#'                     response_vars = c(shape = 1, rate = 1))
+#'
+#' # Choose ranks
+#' r <- 3
+#' r.vec <- c(3, 3)
+#' ranks <- c(r, r.vec)
+#'
+#' # Number of posterior sampling iterations
+#' nsample <- 1000
+#' burnin <- nsample/2
+#' iters_burnin <- (burnin+1):nsample
+#'
+#' # Generate data
+#' data.c1 <- bsfp_data(p.vec, n, ranks, true_params, s2nX = NULL, s2nY = NULL, response = "continuous", sparsity = FALSE)
+#'
+#' # Run BSFP for 1000 iterations
+#' bsfp.c1 <- bsfp(data = data.c1$data, Y = data.c1$Y, nsample = nsample)
+#'
+#' bsfp.c1.var.explained <- var_explained(BSFP.fit = bsfp.c1, iters_burnin = iters_burnin, source.names = c("Expression", "Methylation"))
 var_explained <- function(BSFP.fit, iters_burnin = NULL, source.names) {
 
   # Save the standardized data
