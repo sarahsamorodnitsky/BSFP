@@ -3203,3 +3203,70 @@ bsfp_data <- function(p.vec, n, ranks, true_params, s2nX = NULL, s2nY = NULL, re
        V = V, U = U, Vs = Vs, W = W, # Components of the structure
        beta = beta, EY = EY, tau2 = tau2, gamma = gamma, p.prior = p.prior)
 }
+
+
+#' var_explained
+#'
+#' Calculates the proportion of variance explained in each data source by each
+#' estimated structure.
+#'
+#' @param BSFP.fit Output from the BSFP function
+#' @param iters_burnin (vector) If adding a burn-in, add the iterations after burn-in. May also include thinning.
+#' Default is NULL if burn-in is already added.
+#' @param source.names (vector) Vector of source names. Should be of length \eqn{q}, the number of sources.
+#'
+#' @details Calculate the proportion of variation in each data source by the estimated structures. Provides posterior
+#' summaries of the variance explained.
+#'
+#' @returns Returns a list of posterior summaries for the variance explained by the joint and individual structures in each source.
+#' \item{Joint}{Named list with each entry corresponding to the posterior mean and 95% credible interval for the proportion
+#' of variance explained by the joint structure in each data source. }
+#' \item{Individual}{Named list with each entry corresponding to the posterior mean and 95% credible interval for the proportion
+#' of variance explained by the individual structures in the corresponding data source. }
+#'
+#' @export
+var_explained <- function(BSFP.fit, iters_burnin = NULL, source.names) {
+
+  # Save the standardized data
+  data <- BSFP.fit$data
+
+  # Save the number of sources
+  q <- nrow(data)
+
+  # If no iterations after burn-in given
+  if (is.null(iters_burnin)) {
+    iters_burnin <- 1:length(BSFP.fit$J.draw)
+  }
+
+  # Save the estimated joint and individual structures and the fitted Y values
+  J.draw <- BSFP.fit$J.draw[iters_burnin]
+  A.draw <- BSFP.fit$A.draw[iters_burnin]
+
+  # Joint structure --
+  joint_var_exp <- lapply(1:q, function(s) {
+    var_by_iter <- sapply(1:length(iters_burnin), function(iter) {
+      1 - (frob(data[[s,1]] - J.draw[[iter]][[s,1]]))/frob(data[[s,1]])
+    })
+  })
+  names(joint_var_exp) <- source.names
+
+  # Individual structure --
+  indiv_var_exp <- lapply(1:q, function(s) {
+    var_by_iter <- sapply(1:length(iters_burnin), function(iter) {
+      1 - (frob(data[[s,1]] - A.draw[[iter]][[s,1]]))/frob(data[[s,1]])
+    })
+  })
+  names(indiv_var_exp) <- source.names
+
+  # Summarizing the results
+  joint_summary <- lapply(1:q, function(s) {
+    c(Mean = mean(joint_var_exp[[s]]), Lower = quantile(joint_var_exp[[s]], 0.025), Upper = quantile(joint_var_exp[[s]], 0.975))
+  })
+  indiv_summary <- lapply(1:q, function(s) {
+    c(Mean = mean(indiv_var_exp[[s]]), Lower = quantile(indiv_var_exp[[s]], 0.025), Upper = quantile(indiv_var_exp[[s]], 0.975))
+  })
+  names(joint_summary) <- names(indiv_summary) <- source.names
+
+  # Return
+  list(Joint = joint_summary, Individual = indiv_summary)
+}
