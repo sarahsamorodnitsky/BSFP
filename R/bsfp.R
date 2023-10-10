@@ -3223,6 +3223,10 @@ bsfp_data <- function(p.vec, n, ranks, true_params, s2nX = NULL, s2nY = NULL, re
 #' of variance explained by the joint structure in each data source. }
 #' \item{Individual}{Named list with each entry corresponding to the posterior mean and 95% credible interval for the proportion
 #' of variance explained by the individual structures in the corresponding data source. }
+#' \item{Joint.Response}{Vector with the posterior mean and 95% credible interval for the proportion of variance
+#' explained by the joint factors in the predictive model.}
+#' \item{Individual.Response}{Named list with each entry corresponding to the posterior mean and 95% credible interval for the proportion of variance
+#' explained by the individual factors in the predictive model.}
 #'
 #' @export
 #'
@@ -3261,8 +3265,50 @@ var_explained <- function(BSFP.fit, iters_burnin = NULL, source.names) {
   # Save the standardized data
   data <- BSFP.fit$data
 
+  # Unstandardize
+  for (s in 1:q) {
+    data[[s,1]] <- data[[s,1]] * BSFP.fit$sigma.mat[s,1]
+  }
+
   # Save the number of sources
   q <- nrow(data)
+
+  # Save the ranks
+  ranks <- BSFP.fit$ranks
+
+  # Rank indices
+  rank.inds <- lapply(1:(q+1), function(s) {
+
+    # For any structure,
+    if (ranks[s] == 0) {
+      NULL
+    }
+
+    # For joint structure
+    else if (s == 1) {
+      if (ranks[s] > 0) {
+        1:ranks[s]
+      }
+    }
+
+    # For each individual structure
+    else if (s > 1) {
+      (sum(ranks[1:(s-1)])+1):sum(ranks[1:s])
+    }
+
+  })
+
+  # Regression coefficient indices
+  beta.ind <- lapply(1:(q+1), function(s) {
+
+    if (is.null(rank.inds[[s]])) {
+      NULL
+    }
+
+    else {
+      rank.inds[[s]] + 1
+    }
+  })
 
   # If no iterations after burn-in given
   if (is.null(iters_burnin)) {
@@ -3298,6 +3344,56 @@ var_explained <- function(BSFP.fit, iters_burnin = NULL, source.names) {
   })
   names(joint_summary) <- names(indiv_summary) <- source.names
 
+  # Calculate the variance explained for the outcome
+  Y <- matrix(unlist(BSFP.fit$Y))
+
+  # Save the response type
+  response_type <- if (all(unique(Y) %in% c(0, 1, NA))) "binary" else "continuous"
+
+  if (response_type == "continuous") {
+
+    joint_contribution_to_response <- sapply(iters_burnin, function(iter) {
+      var(BSFP.fit$V.draw[[iter]][[1,1]] %*% BSFP.fit$beta.draw[[iter]][[1,1]][beta.ind[[1]],,drop=FALSE])/var(Y)
+    })
+
+    individual_contribution_to_response <- lapply(1:q, function(s) {
+      sapply(iters_burnin, function(iter) {
+        var(BSFP.fit$Vs.draw[[iter]][[1,s]] %*% BSFP.fit$beta.draw[[iter]][[1,1]][beta.ind[[s+1]],,drop=FALSE])/var(Y)
+      })
+    })
+
+  }
+
+  if (response_type == "binary") {
+
+    joint_contribution_to_response <- sapply(iters_burnin, function(iter) {
+      pnorm(BSFP.fit$V.draw[[iter]][[1,1]] %*% BSFP.fit$beta.draw[[iter]][[1,1]][beta.ind[[1]],,drop=FALSE])/BSFP.fit$EY.draw[[iter]][[1,1]]
+    })
+
+    individual_contribution_to_response <- lapply(1:q, function(s) {
+      sapply(iters_burnin, function(iter) {
+        pnorm(BSFP.fit$Vs.draw[[iter]][[1,s]] %*% BSFP.fit$beta.draw[[iter]][[1,1]][beta.ind[[s+1]],,drop=FALSE])/BSFP.fit$EY.draw[[iter]][[1,1]]
+      })
+    })
+
+  }
+
+  # Calculate summary
+  joint.response <- c(mean(joint_contribution_to_response),
+                      quantile(joint_contribution_to_response, 0.025),
+                      quantile(joint_contribution_to_response, 0.975))
+  names(joint.response) <- names(joint_summary[[1]])
+
+  indiv.response <- lapply(1:q, function(s) {
+    res <- c(mean(individual_contribution_to_response[[s]]),
+      quantile(individual_contribution_to_response[[s]], 0.025),
+      quantile(individual_contribution_to_response[[s]], 0.975))
+    names(res) <- names(joint_summary[[1]])
+    res
+  })
+  names(indiv.response) <- source.names
+
   # Return
-  list(Joint = joint_summary, Individual = indiv_summary)
+  list(Joint = joint_summary, Individual = indiv_summary,
+       Joint.Response = joint.response, Individual.Response = indiv.response)
 }
