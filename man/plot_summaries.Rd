@@ -47,7 +47,7 @@ User can specify loadings or scores to be colored based on a factor using \code{
 Outputs a list of plots for scores and loadings. See example for how to conveniently view each plot.
 }
 \examples{
-#' # Setting up the data
+# Setting up the data
 n <- 50
 p.vec <- c(75, 100)
 q <- 2
@@ -104,7 +104,7 @@ plots.individual.loadings.source2[[2]] # Loadings for individual factor 2 from s
 plots.individuaul.betas.source2[[1]] # All regression coefficients for individual factors for source 2
 
 # OR, output to a pdf (will output to current working directory)
-pdf("Joint_Scores_BSFP.pdf")
-plots.joint.scores
-dev.off()
+# pdf("Joint_Scores_BSFP.pdf")
+# plots.joint.scores
+# dev.off()
 }
