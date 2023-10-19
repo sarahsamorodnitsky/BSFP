@@ -2429,9 +2429,9 @@ summarize_factors <- function(data, Y = NULL, iters_burnin,
 #' plots.individuaul.betas.source2[[1]] # All regression coefficients for individual factors for source 2
 #'
 #' # OR, output to a pdf (will output to current working directory)
-#' pdf("Joint_Scores_BSFP.pdf")
-#' plots.joint.scores
-#' dev.off()
+#' # pdf("Joint_Scores_BSFP.pdf")
+#' # plots.joint.scores
+#' # dev.off()
 plot_summaries <- function(summaries, structure, output, source = NULL, xlab.name = NULL,
                            sample.labels = NULL, biomarker.labels = NULL, label.x = FALSE) {
 
