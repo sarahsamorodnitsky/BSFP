@@ -24,13 +24,13 @@ plot_summaries(
 
 \item{source}{(vector of ints) specify source by index from 1:q or NULL if plotting the joint scores}
 
-\item{sample.labels}{(vector of strings) NULL if \code{output != scores}. Otherwise, labels for plotting sample scores, e.g. c(1, "Control", "Control", ...). Could be the outcome used in BSFP. If NULL, plot will highlight credible intervals which don't contain 0.}
+\item{sample.labels}{(vector of strings) NULL if \code{output != "scores"}. Otherwise, labels for plotting sample scores, e.g. \code{c(1, "Control", "Control", ...)}. Could be the outcome used in BSFP. If NULL, plot will highlight credible intervals which don't contain 0.}
 
 \item{label.x}{(Boolean) Should the x-axis labels be plotted? Default is FALSE. There may be many labels which makes the plot messy.}
 
 \item{source.name}{(string) Specify the name of the source, e.g. "Expression" or "Metabolome"}
 
-\item{biomarker.names}{(vector of strings) NULL if \code{structure != "individual}. Otherwise, labels for plotting the biomarker loadings, e.g. c("Gene 1", "Gene 2", ...). If NULL, plot will highlight credible intervals which don't contain 0.}
+\item{biomarker.names}{(vector of strings) NULL if \code{structure != "individual"}. Otherwise, labels for plotting the biomarker loadings, e.g. \code{c("Gene 1", "Gene 2", ...)}. If NULL, plot will highlight credible intervals which don't contain 0.}
 }
 \value{
 Returns a list of plots for each factor if plotting loadings or scores. If plotting regression coefficients,
@@ -92,14 +92,14 @@ plots.joint.betas <- plot_summaries(summary.aligned.c1, structure = "joint", out
 
 plots.individual.scores.source2 <- plot_summaries(summary.aligned.c1, structure = "individual", output = "scores", source = 2)
 plots.individual.loadings.source2 <- plot_summaries(summary.aligned.c1, structure = "individual", output = "loadings", source = 2, xlab.name = "Proteins")
-plots.individuaul.betas.source2 <- plot_summaries(summary.aligned.c1, structure = "individual", output = "betas", source = 2)
+plots.individual.betas.source2 <- plot_summaries(summary.aligned.c1, structure = "individual", output = "betas", source = 2)
 
 # View one at a time
-plots.joint.scores[[1]] # Joint factor 1
-plots.joint.loadings.source1[[2]] # Joint factor 2
-plots.joint.betas[[1]] # All regression coefficients for joint factors
+# plots.joint.scores[[1]] # Joint factor 1
+# plots.joint.loadings.source1[[2]] # Joint factor 2
+# plots.joint.betas[[1]] # All regression coefficients for joint factors
 
-plots.individual.scores.source2[[1]] # Scores for individual factor 1 from source 2
-plots.individual.loadings.source2[[2]] # Loadings for individual factor 2 from source 2
-plots.individuaul.betas.source2[[1]] # All regression coefficients for individual factors for source 2
+# plots.individual.scores.source2[[1]] # Scores for individual factor 1 from source 2
+# plots.individual.loadings.source2[[2]] # Loadings for individual factor 2 from source 2
+# plots.individual.betas.source2[[1]] # All regression coefficients for individual factors for source 2
 }

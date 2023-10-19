@@ -2347,198 +2347,6 @@ summarize_factors <- function(data, Y = NULL, iters_burnin,
 
 }
 
-#' plot_summaries
-#'
-#' Plot the posterior summaries (posterior mean, 95\% credible interval) for the estimated
-#' scores, loadings, and regression coefficients.
-#'
-#' @param summaries Output from \code{summarize_factors()} function
-#' @param structure (string) specify one of "joint" or "individual"
-#' @param output (string) specify one of "scores", "loadings", "betas"
-#' @param source (vector of ints) specify source by index from 1:q or NULL if plotting the joint scores
-#' @param source.name (string) Specify the name of the source, e.g. "Expression" or "Metabolome"
-#' @param sample.labels (vector of strings) NULL if \code{output != scores}. Otherwise, labels for plotting sample scores, e.g. c(1, "Control", "Control", ...). Could be the outcome used in BSFP. If NULL, plot will highlight credible intervals which don't contain 0.
-#' @param biomarker.names (vector of strings) NULL if \code{structure != "individual}. Otherwise, labels for plotting the biomarker loadings, e.g. c("Gene 1", "Gene 2", ...). If NULL, plot will highlight credible intervals which don't contain 0.
-#' @param label.x (Boolean) Should the x-axis labels be plotted? Default is FALSE. There may be many labels which makes the plot messy.
-#'
-#' @details Plotting function for the posterior means and credible intervals generated from \code{summarize_factors}.
-#' Automatically orders the scores/loadings/regression coefficients by posterior mean for easy visualization.
-#' User can specify loadings or scores to be colored based on a factor using \code{biomarker.labels} or \code{sample.labels}, respectively.
-#' Outputs a list of plots for scores and loadings. See example for how to conveniently view each plot.
-#'
-#' @return Returns a list of plots for each factor if plotting loadings or scores. If plotting regression coefficients,
-#' outputs a list with 1 plot only.
-#'
-#' @export
-#'
-#' @examples
-#' # Setting up the data
-#' n <- 50
-#' p.vec <- c(75, 100)
-#' q <- 2
-#'
-#' # Setting up the model parameters
-#' true_params <- list(error_vars = c(1,1),
-#'                     joint_var = 1,
-#'                    indiv_vars = c(1,1),
-#'                    beta_vars = c(1, 1, rep(1, q)),
-#'                    response_vars = c(shape = 1, rate = 1))
-#'
-#' # Choose ranks
-#' r <- 3
-#' r.vec <- c(3, 3)
-#' ranks <- c(r, r.vec)
-#'
-#' # Number of posterior sampling iterations
-#' nsample <- 1000
-#' burnin <- nsample/2
-#' iters_burnin <- (burnin+1):nsample
-#'
-#' # Generate data
-#' data.c1 <- bsfp_data(p.vec, n, ranks, true_params, s2nX = NULL, s2nY = NULL, response = "continuous", sparsity = FALSE)
-#'
-#' # Run BSFP for 1000 iterations
-#' bsfp.c1 <- bsfp(data = data.c1$data, Y = data.c1$Y, nsample = nsample)
-#'
-#' # Run the alignment algorithm
-#' alignment.c1 <- match_align_bsfp(BSFP.fit = bsfp.c1, y = data.c1$Y,
-#'                                  model_params = bsfp.c1$model_params,
-#'                                  p.vec = p.vec, iters_burnin = iters_burnin)
-#'
-#' # Summarize aligned factors
-#' summary.aligned.c1 <- summarize_factors(data = data.c1$data, Y = data.c1$Y,
-#'                                         iters_burnin = iters_burnin,
-#'                                         aligned_results = alignment.c1,
-#'                                         ranks = bsfp.c1$ranks, tau2.draw = bsfp.c1$tau2.draw)
-
-
-plot_summaries <- function(summaries, structure, output, source = NULL, xlab.name = NULL,
-                           sample.labels = NULL, biomarker.labels = NULL, label.x = FALSE) {
-
-  # Paste together structure and output names
-  structure.output <- paste0(structure, ".", output)
-
-  # Check if source was specified if not plotting joint scores
-  if (structure.output != "joint.scores" & structure.output != "joint.betas" & is.null(source)) stop("You must specify the source argument (choose from 1:q where q is the number of sources)")
-
-
-  # Check if an x-axis label was specified
-  if (output == "loadings" & is.null(xlab.name)) stop("You must specify a name for the x-axis label using xlab.name, e.g. xlab.name = 'Gene Loadings' ")
-
-
-  # Select the object from the summary
-  obj.summary <- summaries[grepl(structure.output, names(summaries))][[1]]
-
-  # If structure == "individual", save the corresponding source
-  if (structure == "individual" | output == "loadings") {
-    obj.summary <- obj.summary[[source]]
-  }
-
-  # Initialize a list of plots
-  if (output != "betas") {
-    plot.list <- lapply(1:length(obj.summary), function(i) list())
-  }
-
-  if (output == "betas") {
-    obj.summary <- list(obj.summary)
-    plot.list <- list(1)
-  }
-
-  # Iterate through the factors and create plots
-  for (i in 1:length(plot.list)) {
-
-    # Add the sample/biomarker ID
-    obj.summary.i <- cbind.data.frame(ID = factor(rownames(obj.summary[[i]])),
-                                      obj.summary[[i]])
-
-    # Add labels for the bimoarkers if given
-    if (!is.null(biomarker.labels)) {
-      obj.summary.i <- cbind.data.frame(ID = factor(rownames(obj.summary[[i]])),
-                                        label = factor(biomarker.labels),
-                                        obj.summary[[i]])
-    }
-
-    # If labels for the samples are given
-    if (!is.null(sample.labels)) {
-      obj.summary.i <- cbind.data.frame(ID = factor(rownames(obj.summary[[i]])),
-                                        label = factor(sample.labels),
-                                        obj.summary[[i]])
-    }
-
-    # Order by mean
-    obj.summary.i <- obj.summary.i[order(obj.summary.i$Post.Mean, decreasing = TRUE),]
-
-    # Add whether or not CI contains 0
-    if (is.null(biomarker.labels) & is.null(sample.labels)) {
-      obj.summary.i.sig <- obj.summary.i %>%
-        filter(sign(Lower.95.CI) == sign(Upper.95.CI))
-    }
-
-    # Color the CIs by the non-reference label if given
-    if (!is.null(biomarker.labels)) {
-      obj.summary.i.sig <- obj.summary.i %>%
-        filter(label == levels(obj.summary.i$label)[length(levels(obj.summary.i$label))])
-    }
-
-    if (!is.null(sample.labels)) {
-      obj.summary.i.sig <- obj.summary.i %>%
-        filter(label == levels(obj.summary.i$label)[length(levels(obj.summary.i$label))])
-    }
-
-    # Set the title
-    structure.title <- ifelse(structure == "joint", "Joint", "Individual")
-    output.title <- "Scores"
-    output.title <- ifelse(output != "scores", ifelse(output == "loadings", "Loadings", "Regression Coefficients"), "Scores")
-
-    # Depending on the output type, change the title accordingly
-    # If output is not the regression coefficients, state specific factor
-    if (output != "betas") {
-      title <- paste0(structure.title, " Factor ", i, " - ", output.title, " and Credible Intervals")
-    }
-
-    # If output is the regression coefficients, mention specific structure
-    if (output == "betas") {
-      title <- paste0(structure.title, " Structure - ", output.title, " and Credible Intervals")
-    }
-
-    # Set the x- and y-axis labels
-    xlab <- "Sample"
-    xlab <- ifelse(output != "scores", ifelse(output == "loadings", xlab.name, "Regression Coefficients"), "Sample")
-    ylab <- paste0("Posterior Mean")
-
-    # Plot the results for the scores
-    pp <- obj.summary.i %>%
-      ggplot(aes(ID, Post.Mean)) +
-      geom_point() +
-      geom_errorbar(aes(ymin = Lower.95.CI, ymax = Upper.95.CI)) +
-      geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
-      aes(x = fct_inorder(ID)) +
-      geom_errorbar(aes(ymin = Lower.95.CI, ymax = Upper.95.CI),
-                    col = "black") +
-      geom_point(data = obj.summary.i.sig,
-                 aes(ID, Post.Mean), color = "orange") +
-      geom_errorbar(data = obj.summary.i.sig,
-                    aes(ymin = Lower.95.CI, ymax = Upper.95.CI),
-                    col = "orange") +
-      theme_bw() +
-      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
-      ggtitle(title) +
-      xlab(xlab) +
-      ylab(ylab)
-
-    # If x-axis labels should be removed
-    if (!label.x) {
-      pp <- pp + theme(axis.text.x=element_blank())
-    }
-
-    # Add figure to list
-    plot.list[[i]] <- pp
-  }
-
-  # Return
-  plot.list
-}
-
 #' Log-joint density of Bayesian Simultaneous Factorization and Prediction
 #'
 #' Calculate the log-joint density of the estimated model at a given posterior
@@ -3235,13 +3043,13 @@ var_explained <- function(BSFP.fit, iters_burnin = NULL, source.names) {
   # Save the standardized data
   data <- BSFP.fit$data
 
+  # Save the number of sources
+  q <- nrow(data)
+
   # Unstandardize
   for (s in 1:q) {
     data[[s,1]] <- data[[s,1]] * BSFP.fit$sigma.mat[s,1]
   }
-
-  # Save the number of sources
-  q <- nrow(data)
 
   # Save the ranks
   ranks <- BSFP.fit$ranks
@@ -3366,4 +3174,215 @@ var_explained <- function(BSFP.fit, iters_burnin = NULL, source.names) {
   # Return
   list(Joint = joint_summary, Individual = indiv_summary,
        Joint.Response = joint.response, Individual.Response = indiv.response)
+}
+
+#' plot_summaries
+#'
+#' Plot the posterior summaries (posterior mean, 95\% credible interval) for the estimated
+#' scores, loadings, and regression coefficients.
+#'
+#' @param summaries Output from \code{summarize_factors()} function
+#' @param structure (string) specify one of "joint" or "individual"
+#' @param output (string) specify one of "scores", "loadings", "betas"
+#' @param source (vector of ints) specify source by index from 1:q or NULL if plotting the joint scores
+#' @param source.name (string) Specify the name of the source, e.g. "Expression" or "Metabolome"
+#' @param sample.labels (vector of strings) NULL if \code{output != "scores"}. Otherwise, labels for plotting sample scores, e.g. \code{c(1, "Control", "Control", ...)}. Could be the outcome used in BSFP. If NULL, plot will highlight credible intervals which don't contain 0.
+#' @param biomarker.names (vector of strings) NULL if \code{structure != "individual"}. Otherwise, labels for plotting the biomarker loadings, e.g. \code{c("Gene 1", "Gene 2", ...)}. If NULL, plot will highlight credible intervals which don't contain 0.
+#' @param label.x (Boolean) Should the x-axis labels be plotted? Default is FALSE. There may be many labels which makes the plot messy.
+#'
+#' @details Plotting function for the posterior means and credible intervals generated from \code{summarize_factors}.
+#' Automatically orders the scores/loadings/regression coefficients by posterior mean for easy visualization.
+#' User can specify loadings or scores to be colored based on a factor using \code{biomarker.labels} or \code{sample.labels}, respectively.
+#' Outputs a list of plots for scores and loadings. See example for how to conveniently view each plot.
+#'
+#' @return Returns a list of plots for each factor if plotting loadings or scores. If plotting regression coefficients,
+#' outputs a list with 1 plot only.
+#'
+#' @importFrom magrittr %>%
+#' @import ggplot2
+#'
+#' @export
+#'
+#' @examples
+#' # Setting up the data
+#' n <- 50
+#' p.vec <- c(75, 100)
+#' q <- 2
+#'
+#' # Setting up the model parameters
+#' true_params <- list(error_vars = c(1,1),
+#'                     joint_var = 1,
+#'                    indiv_vars = c(1,1),
+#'                    beta_vars = c(1, 1, rep(1, q)),
+#'                    response_vars = c(shape = 1, rate = 1))
+#'
+#' # Choose ranks
+#' r <- 3
+#' r.vec <- c(3, 3)
+#' ranks <- c(r, r.vec)
+#'
+#' # Number of posterior sampling iterations
+#' nsample <- 1000
+#' burnin <- nsample/2
+#' iters_burnin <- (burnin+1):nsample
+#'
+#' # Generate data
+#' data.c1 <- bsfp_data(p.vec, n, ranks, true_params, s2nX = NULL, s2nY = NULL, response = "continuous", sparsity = FALSE)
+#'
+#' # Run BSFP for 1000 iterations
+#' bsfp.c1 <- bsfp(data = data.c1$data, Y = data.c1$Y, nsample = nsample)
+#'
+#' # Run the alignment algorithm
+#' alignment.c1 <- match_align_bsfp(BSFP.fit = bsfp.c1, y = data.c1$Y,
+#'                                  model_params = bsfp.c1$model_params,
+#'                                  p.vec = p.vec, iters_burnin = iters_burnin)
+#'
+#' # Summarize aligned factors
+#' summary.aligned.c1 <- summarize_factors(data = data.c1$data, Y = data.c1$Y,
+#'                                         iters_burnin = iters_burnin,
+#'                                         aligned_results = alignment.c1,
+#'                                         ranks = bsfp.c1$ranks, tau2.draw = bsfp.c1$tau2.draw)
+#' # Plot summaries
+#' plots.joint.scores <- plot_summaries(summary.aligned.c1, structure = "joint", output = "scores")
+#' plots.joint.loadings.source1 <- plot_summaries(summary.aligned.c1, structure = "joint", output = "loadings", source = 1, xlab.name = "Genes")
+#' plots.joint.betas <- plot_summaries(summary.aligned.c1, structure = "joint", output = "betas")
+#'
+#' plots.individual.scores.source2 <- plot_summaries(summary.aligned.c1, structure = "individual", output = "scores", source = 2)
+#' plots.individual.loadings.source2 <- plot_summaries(summary.aligned.c1, structure = "individual", output = "loadings", source = 2, xlab.name = "Proteins")
+#' plots.individual.betas.source2 <- plot_summaries(summary.aligned.c1, structure = "individual", output = "betas", source = 2)
+#'
+#' # View one at a time
+#' # plots.joint.scores[[1]] # Joint factor 1
+#' # plots.joint.loadings.source1[[2]] # Joint factor 2
+#' # plots.joint.betas[[1]] # All regression coefficients for joint factors
+#'
+#' # plots.individual.scores.source2[[1]] # Scores for individual factor 1 from source 2
+#' # plots.individual.loadings.source2[[2]] # Loadings for individual factor 2 from source 2
+#' # plots.individual.betas.source2[[1]] # All regression coefficients for individual factors for source 2
+
+plot_summaries <- function(summaries, structure, output, source = NULL, xlab.name = NULL,
+                           sample.labels = NULL, biomarker.labels = NULL, label.x = FALSE) {
+
+  # Paste together structure and output names
+  structure.output <- paste0(structure, ".", output)
+
+  # Check if source was specified if not plotting joint scores
+  if (structure.output != "joint.scores" & structure.output != "joint.betas" & is.null(source)) stop("You must specify the source argument (choose from 1:q where q is the number of sources)")
+
+
+  # Check if an x-axis label was specified
+  if (output == "loadings" & is.null(xlab.name)) stop("You must specify a name for the x-axis label using xlab.name, e.g. xlab.name = 'Gene Loadings' ")
+
+
+  # Select the object from the summary
+  obj.summary <- summaries[grepl(structure.output, names(summaries))][[1]]
+
+  # If structure == "individual", save the corresponding source
+  if (structure == "individual" | output == "loadings") {
+    obj.summary <- obj.summary[[source]]
+  }
+
+  # Initialize a list of plots
+  if (output != "betas") {
+    plot.list <- lapply(1:length(obj.summary), function(i) list())
+  }
+
+  if (output == "betas") {
+    obj.summary <- list(obj.summary)
+    plot.list <- list(1)
+  }
+
+  # Iterate through the factors and create plots
+  for (i in 1:length(plot.list)) {
+
+    # Add the sample/biomarker ID
+    obj.summary.i <- cbind.data.frame(ID = factor(rownames(obj.summary[[i]])),
+                                      obj.summary[[i]])
+
+    # Add labels for the bimoarkers if given
+    if (!is.null(biomarker.labels)) {
+      obj.summary.i <- cbind.data.frame(ID = factor(rownames(obj.summary[[i]])),
+                                        label = factor(biomarker.labels),
+                                        obj.summary[[i]])
+    }
+
+    # If labels for the samples are given
+    if (!is.null(sample.labels)) {
+      obj.summary.i <- cbind.data.frame(ID = factor(rownames(obj.summary[[i]])),
+                                        label = factor(sample.labels),
+                                        obj.summary[[i]])
+    }
+
+    # Order by mean
+    obj.summary.i <- obj.summary.i[order(obj.summary.i$Post.Mean, decreasing = TRUE),]
+
+    # Add whether or not CI contains 0
+    if (is.null(biomarker.labels) & is.null(sample.labels)) {
+      obj.summary.i.sig <- obj.summary.i %>%
+        dplyr::filter(sign(Lower.95.CI) == sign(Upper.95.CI))
+    }
+
+    # Color the CIs by the non-reference label if given
+    if (!is.null(biomarker.labels)) {
+      obj.summary.i.sig <- obj.summary.i %>%
+        dplyr::filter(label == levels(obj.summary.i$label)[length(levels(obj.summary.i$label))])
+    }
+
+    if (!is.null(sample.labels)) {
+      obj.summary.i.sig <- obj.summary.i %>%
+        dplyr::filter(label == levels(obj.summary.i$label)[length(levels(obj.summary.i$label))])
+    }
+
+    # Set the title
+    structure.title <- ifelse(structure == "joint", "Joint", "Individual")
+    output.title <- "Scores"
+    output.title <- ifelse(output != "scores", ifelse(output == "loadings", "Loadings", "Regression Coefficients"), "Scores")
+
+    # Depending on the output type, change the title accordingly
+    # If output is not the regression coefficients, state specific factor
+    if (output != "betas") {
+      title <- paste0(structure.title, " Factor ", i, " - ", output.title, " and Credible Intervals")
+    }
+
+    # If output is the regression coefficients, mention specific structure
+    if (output == "betas") {
+      title <- paste0(structure.title, " Structure - ", output.title, " and Credible Intervals")
+    }
+
+    # Set the x- and y-axis labels
+    xlab <- "Sample"
+    xlab <- ifelse(output != "scores", ifelse(output == "loadings", xlab.name, "Regression Coefficients"), "Sample")
+    ylab <- paste0("Posterior Mean")
+
+    # Plot the results for the scores
+    pp <- obj.summary.i %>%
+      ggplot2::ggplot(aes(ID, Post.Mean)) +
+      geom_point() +
+      geom_errorbar(aes(ymin = Lower.95.CI, ymax = Upper.95.CI)) +
+      geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
+      aes(x = forcats::fct_inorder(ID)) +
+      geom_errorbar(aes(ymin = Lower.95.CI, ymax = Upper.95.CI),
+                    col = "black") +
+      geom_point(data = obj.summary.i.sig,
+                 aes(ID, Post.Mean), color = "orange") +
+      geom_errorbar(data = obj.summary.i.sig,
+                    aes(ymin = Lower.95.CI, ymax = Upper.95.CI),
+                    col = "orange") +
+      theme_bw() +
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+      ggtitle(title) +
+      xlab(xlab) +
+      ylab(ylab)
+
+    # If x-axis labels should be removed
+    if (!label.x) {
+      pp <- pp + theme(axis.text.x=element_blank())
+    }
+
+    # Add figure to list
+    plot.list[[i]] <- pp
+  }
+
+  # Return
+  plot.list
 }

@@ -23,6 +23,7 @@ Imports:
     invgamma,
     dplyr,
     ggplot2,
-    forcats
+    forcats,
+    magrittr
 RdMacros: Rdpack
 RoxygenNote: 7.2.3
