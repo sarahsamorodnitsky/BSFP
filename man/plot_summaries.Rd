@@ -102,9 +102,4 @@ plots.joint.betas[[1]] # All regression coefficients for joint factors
 plots.individual.scores.source2[[1]] # Scores for individual factor 1 from source 2
 plots.individual.loadings.source2[[2]] # Loadings for individual factor 2 from source 2
 plots.individuaul.betas.source2[[1]] # All regression coefficients for individual factors for source 2
-
-# OR, output to a pdf (will output to current working directory)
-# pdf("Joint_Scores_BSFP.pdf")
-# plots.joint.scores
-# dev.off()
 }
