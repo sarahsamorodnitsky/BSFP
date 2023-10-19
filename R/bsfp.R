@@ -2349,7 +2349,7 @@ summarize_factors <- function(data, Y = NULL, iters_burnin,
 
 #' plot_summaries
 #'
-#' Plot the posterior summaries (posterior mean, 95% credible interval) for the estimated
+#' Plot the posterior summaries (posterior mean, 95\% credible interval) for the estimated
 #' scores, loadings, and regression coefficients.
 #'
 #' @param summaries Output from \code{summarize_factors()} function
@@ -3205,13 +3205,13 @@ bsfp_data <- function(p.vec, n, ranks, true_params, s2nX = NULL, s2nY = NULL, re
 #' summaries of the variance explained.
 #'
 #' @returns Returns a list of posterior summaries for the variance explained by the joint and individual structures in each source.
-#' \item{Joint}{Named list with each entry corresponding to the posterior mean and 95% credible interval for the proportion
+#' \item{Joint}{Named list with each entry corresponding to the posterior mean and 95\% credible interval for the proportion
 #' of variance explained by the joint structure in each data source. }
-#' \item{Individual}{Named list with each entry corresponding to the posterior mean and 95% credible interval for the proportion
+#' \item{Individual}{Named list with each entry corresponding to the posterior mean and 95\% credible interval for the proportion
 #' of variance explained by the individual structures in the corresponding data source. }
-#' \item{Joint.Response}{Vector with the posterior mean and 95% credible interval for the proportion of variance
+#' \item{Joint.Response}{Vector with the posterior mean and 95\% credible interval for the proportion of variance
 #' explained by the joint factors in the predictive model.}
-#' \item{Individual.Response}{Named list with each entry corresponding to the posterior mean and 95% credible interval for the proportion of variance
+#' \item{Individual.Response}{Named list with each entry corresponding to the posterior mean and 95\% credible interval for the proportion of variance
 #' explained by the individual factors in the predictive model.}
 #'
 #' @export
