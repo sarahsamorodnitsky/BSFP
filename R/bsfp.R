@@ -2372,7 +2372,7 @@ summarize_factors <- function(data, Y = NULL, iters_burnin,
 #' @export
 #'
 #' @examples
-#' #' # Setting up the data
+#' # Setting up the data
 #' n <- 50
 #' p.vec <- c(75, 100)
 #' q <- 2
