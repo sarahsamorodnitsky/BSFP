@@ -2410,23 +2410,7 @@ summarize_factors <- function(data, Y = NULL, iters_burnin,
 #'                                         iters_burnin = iters_burnin,
 #'                                         aligned_results = alignment.c1,
 #'                                         ranks = bsfp.c1$ranks, tau2.draw = bsfp.c1$tau2.draw)
-#' # Plot summaries
-#' plots.joint.scores <- plot_summaries(summary.aligned.c1, structure = "joint", output = "scores")
-#' plots.joint.loadings.source1 <- plot_summaries(summary.aligned.c1, structure = "joint", output = "loadings", source = 1, xlab.name = "Genes")
-#' plots.joint.betas <- plot_summaries(summary.aligned.c1, structure = "joint", output = "betas")
-#'
-#' plots.individual.scores.source2 <- plot_summaries(summary.aligned.c1, structure = "individual", output = "scores", source = 2)
-#' plots.individual.loadings.source2 <- plot_summaries(summary.aligned.c1, structure = "individual", output = "loadings", source = 2, xlab.name = "Proteins")
-#' plots.individuaul.betas.source2 <- plot_summaries(summary.aligned.c1, structure = "individual", output = "betas", source = 2)
-#'
-#' # View one at a time
-#' plots.joint.scores[[1]] # Joint factor 1
-#' plots.joint.loadings.source1[[2]] # Joint factor 2
-#' plots.joint.betas[[1]] # All regression coefficients for joint factors
-#'
-#' plots.individual.scores.source2[[1]] # Scores for individual factor 1 from source 2
-#' plots.individual.loadings.source2[[2]] # Loadings for individual factor 2 from source 2
-#' plots.individuaul.betas.source2[[1]] # All regression coefficients for individual factors for source 2
+
 
 plot_summaries <- function(summaries, structure, output, source = NULL, xlab.name = NULL,
                            sample.labels = NULL, biomarker.labels = NULL, label.x = FALSE) {

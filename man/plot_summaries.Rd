@@ -37,7 +37,7 @@ Returns a list of plots for each factor if plotting loadings or scores. If plott
 outputs a list with 1 plot only.
 }
 \description{
-Plot the posterior summaries (posterior mean, 95% credible interval) for the estimated
+Plot the posterior summaries (posterior mean, 95\% credible interval) for the estimated
 scores, loadings, and regression coefficients.
 }
 \details{
