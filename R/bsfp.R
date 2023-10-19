@@ -2435,16 +2435,6 @@ summarize_factors <- function(data, Y = NULL, iters_burnin,
 plot_summaries <- function(summaries, structure, output, source = NULL, xlab.name = NULL,
                            sample.labels = NULL, biomarker.labels = NULL, label.x = FALSE) {
 
-  # summaries = output from summarize_factors
-  # structure = "joint" or "individual"
-  # output = "scores", "loadings", "betas"
-  # source = 1:q or NULL if plotting joint scores
-  # biomarker.names = c("Source 1 name", "Source 2 name", ...) e.g. c("Gene", "Metabolite", ...) or NULL if structure != "individual"
-  # grouping = label for plotting scores
-  # label.x = Boolean. Should x-axis be labeled? Could be messy with many samples/biomarkers/factors
-  # sample.labels = labels for samples if desired. NULL if output != scores or if not wanted. Default will plot CIs not containing 0.
-  # biomarker.labels = labels for biomarkers if desired. NULL if output != loadings or if not wanted. Default will plot CIs not containing 0.
-
   # Paste together structure and output names
   structure.output <- paste0(structure, ".", output)
 
